@@ -193,8 +193,10 @@ int main(void)
 
 	float theAmazingScale = 1.0f;
 
-//	glEnable( GL_DEPTH_TEST );
-//	glCullFace( GL_BACK );
+	glEnable( GL_DEPTH_TEST );
+
+	glEnable( GL_CULL_FACE );
+	glCullFace( GL_BACK );
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -211,8 +213,9 @@ int main(void)
 		glfwGetFramebufferSize(window, &width, &height);
 		ratio = width / ( float )height;
 		glViewport(0, 0, width, height);
-		glClear(GL_COLOR_BUFFER_BIT);
-//		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		
 		// The matModel stuff WAS here. Moved below...
 
@@ -304,12 +307,16 @@ int main(void)
 
 			// Is it wireframe? 
 			if ( pCurMesh->isWireframe )
-			{
+			{	// Yuppers.
 				glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+				glDisable( GL_DEPTH_TEST );
+				glDisable( GL_CULL_FACE );
 			}
 			else
 			{
 				glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+				glEnable( GL_DEPTH_TEST );
+				glEnable( GL_CULL_FACE );
 			}
 
 			glUseProgram(program);
