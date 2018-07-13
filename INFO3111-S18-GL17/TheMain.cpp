@@ -5,8 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 #include <glm/gtc/type_ptr.hpp> // glm::value_ptr
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "globalOpenGLStuff.h"
+
 //#include "linmath.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -70,6 +70,8 @@ static const char* vertex_shader_text =
 "    vec3 newVertex = vPos;				\n"
 "    gl_Position = MVP * vec4(newVertex, 1.0);\n"
 "    color = meshColour;\n"				// color = vCol;
+"    color *= 0.01f;\n"
+"    color += vCol;\n"
 "}\n";
 
 static const char* fragment_shader_text =
@@ -191,6 +193,9 @@ int main(void)
 
 	float theAmazingScale = 1.0f;
 
+//	glEnable( GL_DEPTH_TEST );
+//	glCullFace( GL_BACK );
+
 	while (!glfwWindowShouldClose(window))
 	{
 		float ratio;
@@ -207,6 +212,7 @@ int main(void)
 		ratio = width / ( float )height;
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
+//		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		// The matModel stuff WAS here. Moved below...
 
@@ -546,7 +552,7 @@ void LoadObjectsIntoScene(void)
 								   205.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
 		pTemp->scale = 1.5f;
-		pTemp->isWireframe = true;
+		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
 	}

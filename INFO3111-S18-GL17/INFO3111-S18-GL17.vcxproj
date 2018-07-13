@@ -162,6 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cMeshObject.h" />
+    <ClInclude Include="globalOpenGLStuff.h" />
     <ClInclude Include="linmath.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
