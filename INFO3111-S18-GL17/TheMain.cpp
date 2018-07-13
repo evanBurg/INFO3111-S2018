@@ -7,6 +7,8 @@
 
 #include "globalOpenGLStuff.h"
 
+#include "cShaderManager.h"
+
 //#include "linmath.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,6 +18,8 @@
 #include <vector>		// for the ply model loader
 
 #include "cMeshObject.h"
+
+void ShutErDown(void);
 
 //static const struct
 //{
@@ -58,6 +62,7 @@ void LoadTheModel(std::string fileName);
 std::vector< cMeshObject* > g_vec_pMeshObjects;
 void LoadObjectsIntoScene(void);
 
+cShaderManager* g_pTheShaderManager = 0;	// NULL, 0, nullptr
 
 static const char* vertex_shader_text =
 "uniform mat4 MVP;\n"
@@ -99,7 +104,8 @@ void ProcessInput( glm::vec3 &cameraEye,
 int main(void)
 {
 	GLFWwindow* window;
-	GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+	GLuint vertex_buffer, vertex_shader, fragment_shader;
+	//GLuint program;
 	GLint mvp_location; 
 	GLint vpos_location;
 	GLint vcol_location;
@@ -129,6 +135,8 @@ int main(void)
 	// Load objects into scene...
 	LoadObjectsIntoScene();
 
+
+
 	// NOTE: OpenGL error checks have been omitted for brevity
 	glGenBuffers(1, &vertex_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -138,27 +146,59 @@ int main(void)
 				  pVertices,			//vertices, 
 				  GL_STATIC_DRAW);
 
-	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-	glCompileShader(vertex_shader);
+	// Shader manager thing
+	::g_pTheShaderManager = new cShaderManager();
 
-	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-	glCompileShader(fragment_shader);
-	program = glCreateProgram();
+	// A shader "program"
+	cShaderManager::cShaderProgram myShader;
 
-	glAttachShader(program, vertex_shader);
-	glAttachShader(program, fragment_shader);
-	glLinkProgram(program);
+	//... which has at least a vertex and a fragment shader
+	cShaderManager::cShader vertexShader;	
+	cShaderManager::cShader fragmentShader;
 
+	vertexShader.fileName = "vert01.glsl";
+	vertexShader.shaderType = cShaderManager::cShader::VERTEX_SHADER;
+
+	fragmentShader.fileName = "frag01.glsl"; 
+	fragmentShader.shaderType = cShaderManager::cShader::FRAGMENT_SHADER;
+
+	if ( ! ::g_pTheShaderManager->createProgramFromFile(
+			"simpleshader", 
+			vertexShader, 
+			fragmentShader ) )
+	{
+		std::cout << "Oh no! Call Coby Briant! The shaders didn't work!" << std::endl;
+		// What do you do now? Like seriously, what?
+		// Likely just quit
+		std::cout << ::g_pTheShaderManager->getLastError() << std::endl;
+		return(-1);
+	}
+
+//	glUseProgram( 3 );
+	GLuint shadProgID
+		= ::g_pTheShaderManager->getIDFromFriendlyName("simpleshader");
+
+	//vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+	//glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
+	//glCompileShader(vertex_shader);
+//
+	//fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	//glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
+	//glCompileShader(fragment_shader);
+	//program = glCreateProgram();
+//
+	//glAttachShader(program, vertex_shader);
+	//glAttachShader(program, fragment_shader);
+	//glLinkProgram(program);
+//
 	// "uniform mat4 MVP;\n"
 	// "uniform vec3 meshColour; \n"
-	mvp_location = glGetUniformLocation(program, "MVP");
-	vpos_location = glGetAttribLocation(program, "vPos");
-	vcol_location = glGetAttribLocation(program, "vCol");
+	mvp_location = glGetUniformLocation(shadProgID, "MVP");		// program
+	vpos_location = glGetAttribLocation(shadProgID, "vPos");	// program
+	vcol_location = glGetAttribLocation(shadProgID, "vCol");	// program
 
 	// If it returns -1, then it didn't find it.
-	meshColour_UniLoc = glGetUniformLocation(program, "meshColour");
+	meshColour_UniLoc = glGetUniformLocation(3, "meshColour");
 //struct sVert
 //{
 //	float x, y, z;		// added "z"
@@ -319,7 +359,10 @@ int main(void)
 				glEnable( GL_CULL_FACE );
 			}
 
-			glUseProgram(program);
+//			glUseProgram(shadProgID);
+//			::g_pTheShaderManager->useShaderProgram("simpleshader");
+			::g_pTheShaderManager->useShaderProgram( shadProgID );
+
 	//		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, ( const GLfloat* )mvp);
 			glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
 
@@ -335,6 +378,8 @@ int main(void)
 
 	} // while (!glfwWindowShouldClose(window))
 
+
+	ShutErDown();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
@@ -571,9 +616,10 @@ void LoadObjectsIntoScene(void)
 	return;
 }
 
-void CleanEverythingUp(void)
+void ShutErDown(void)
 {
-	// TODO: delete pointers, etc.
+	// 
+	delete ::g_pTheShaderManager;
 
 	return;
 }

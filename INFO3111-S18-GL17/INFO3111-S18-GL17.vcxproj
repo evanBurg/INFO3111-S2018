@@ -157,11 +157,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cMeshObject.cpp" />
+    <ClCompile Include="cShader.cpp" />
+    <ClCompile Include="cShaderManager.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="TheMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cMeshObject.h" />
+    <ClInclude Include="cShaderManager.h" />
     <ClInclude Include="globalOpenGLStuff.h" />
     <ClInclude Include="linmath.h" />
   </ItemGroup>
