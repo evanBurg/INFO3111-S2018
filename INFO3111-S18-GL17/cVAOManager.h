@@ -19,7 +19,7 @@ struct sVert
 
 struct sModelDrawInfo
 {
-	sModelDrawInfo();  // TODO: A c'tor to clear data
+	sModelDrawInfo(); 
 	unsigned int VAO_ID;
 
 	unsigned int VertexBufferID;
@@ -33,6 +33,8 @@ struct sModelDrawInfo
 
 	// The "local" (i.e. "CPU side" temporary array)
 	sVert* pVertices;	//  = 0;
+	// The index buffer (CPU side)
+	unsigned int* pIndices;
 };
 
 
@@ -47,6 +49,8 @@ public:
 	bool FindDrawInfoByModelName(std::string filename,
 								 sModelDrawInfo &drawInfo);
 
+	std::string getLastError(bool bAndClear = true);
+
 private:
 
 	std::map< std::string /*model name*/,
@@ -54,9 +58,12 @@ private:
 		m_map_ModelName_to_VAOID;
 
 	// Loads the ply model file into a temporary array
-	void m_LoadTheModel( std::string fileName, 
+	bool m_LoadTheModel( std::string fileName, 
 						 sModelDrawInfo &drawInfo);
 
+
+	std::string m_lastErrorString;
+	void m_AppendTextToLastError(std::string text, bool addNewLineBefore = true);
 };
 
 #endif	// _cVAOManager_HG_

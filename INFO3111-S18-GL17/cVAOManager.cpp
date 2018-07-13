@@ -9,11 +9,61 @@
 
 #include <vector>
 
+#include <sstream>
+
+sModelDrawInfo::sModelDrawInfo()
+{
+	this->VAO_ID = 0;
+
+	this->VertexBufferID;
+	this->VertexBuffer_Start_Index;
+	this->numberOfVertices;
+
+	this->IndexBufferID;
+	this->IndexBuffer_Start_Index;
+	this->numberOfIndices;
+	this->numberOfTriangles;
+
+	// The "local" (i.e. "CPU side" temporary array)
+	this->pVertices = 0;	// or NULL
+	this->pIndices = 0;		// or NULL
+	return;
+}
+
+
 bool cVAOManager::LoadModelIntoVAO(
 		std::string fileName, 
 		sModelDrawInfo &drawInfo)
 
 {
+	// Load the model from file
+	// (We do this here, since if we can't load it, there's 
+	//	no point in doing anything else, right?)
+
+	if ( ! this->m_LoadTheModel( fileName, drawInfo ) )
+	{
+		this->m_AppendTextToLastError( "Didn't load model", true );
+		return false;
+	}
+
+	// 
+	// Model is loaded and the vertices and indices are in the drawInfo struct
+	// 
+
+	// Create a VAO (Vertex Array Object), which will 
+	//	keep track of all the 'state' needed to draw 
+	//	from this buffer...
+
+	// Ask OpenGL for a new buffer ID...
+	glGenVertexArrays( 1, &(drawInfo.VAO_ID) );
+	// "Bind" this buffer:
+	// - aka "make this the 'current' VAO buffer
+	glBindVertexArray(drawInfo.VAO_ID);
+
+	// Now ANY state that is related to vertex or index buffer
+	//	and vertex attribute layout, is stored in the 'state' 
+	//	of the VAO... 
+
 
 	// NOTE: OpenGL error checks have been omitted for brevity
 //	glGenBuffers(1, &vertex_buffer);
@@ -45,7 +95,7 @@ bool cVAOManager::FindDrawInfoByModelName(
 }
 
 
-void cVAOManager::m_LoadTheModel(std::string fileName,
+bool cVAOManager::m_LoadTheModel(std::string fileName,
 								 sModelDrawInfo &drawInfo )
 {
 	// Open the file. 
@@ -56,6 +106,9 @@ void cVAOManager::m_LoadTheModel(std::string fileName,
 	std::ifstream thePlyFile( fileName.c_str() );
 	if ( ! thePlyFile.is_open() )
 	{	// Something is wrong...
+		std::stringstream ssError;
+		ssError << "Can't open >" << fileName << "< file." << std::endl;
+		this->m_AppendTextToLastError(ssError.str());
 		return;
 	}
 
@@ -143,10 +196,10 @@ void cVAOManager::m_LoadTheModel(std::string fileName,
 			       >> tempTriangle.vindex[1]
 			       >> tempTriangle.vindex[2];
 
-		// Look up the vertex that matches the triangle index values.
-		tempTriangle.verts[0] = vecTempPlyVerts[ tempTriangle.vindex[0] ];
-		tempTriangle.verts[1] = vecTempPlyVerts[ tempTriangle.vindex[1] ];
-		tempTriangle.verts[2] = vecTempPlyVerts[ tempTriangle.vindex[2] ];
+		//// Look up the vertex that matches the triangle index values.
+		//tempTriangle.verts[0] = vecTempPlyVerts[ tempTriangle.vindex[0] ];
+		//tempTriangle.verts[1] = vecTempPlyVerts[ tempTriangle.vindex[1] ];
+		//tempTriangle.verts[2] = vecTempPlyVerts[ tempTriangle.vindex[2] ];
 
 		vecTempPlyTriangles.push_back( tempTriangle );
 	}
@@ -155,44 +208,84 @@ void cVAOManager::m_LoadTheModel(std::string fileName,
 	//	will be passed to OpenGL. Why? 
 	// Because we called glDrawArrays(), that's why. 
 
-	::g_NumberOfVertsToDraw = ::g_NumberOfTriangles * 3;	// 3 because "triangles"
+//	::g_NumberOfVertsToDraw = ::g_NumberOfTriangles * 3;	// 3 because "triangles"
+
+	drawInfo.numberOfIndices = drawInfo.numberOfTriangles * 3;
 
 	// sVert* pVertices = 0;
 //	pVertices = new sVert[::g_NumberOfVertsToDraw];
-	drawInfo.pVertices = new sVert[drawInfo.numb];
+	drawInfo.pVertices = new sVert[drawInfo.numberOfIndices];
 
 	// Allocate on the HEAP, so infinite size... 
 	// delete pVertices			/// error!
 	// delete [] pVertices		/// correct!!
-	unsigned int vertIndex = 0;
+	unsigned int indexBufferIndex = 0;
 	for ( unsigned int triIndex = 0; 
-		  triIndex != ::g_NumberOfTriangles; 
-		  triIndex++, vertIndex += 3 )
+		  triIndex != drawInfo.numberOfTriangles;		// ::g_NumberOfTriangles; 
+		  triIndex++, indexBufferIndex += 3 )
 	{
 		sTriPly& curTri = vecTempPlyTriangles[triIndex];
 
-		pVertices[ vertIndex + 0 ].x = curTri.verts[0].pos.x;
-		pVertices[ vertIndex + 0 ].y = curTri.verts[0].pos.y;
-		pVertices[ vertIndex + 0 ].z = curTri.verts[0].pos.z;
-		pVertices[ vertIndex + 0 ].r = curTri.verts[0].colour.x;
-		pVertices[ vertIndex + 0 ].g = curTri.verts[0].colour.y;
-		pVertices[ vertIndex + 0 ].b = curTri.verts[0].colour.z;
+		// This is taking an array of triangles vertex indices 
+		// (which is a 2D array of indices, really) and converting
+		//  it into a 1D array of indices...)
+		drawInfo.pIndices[indexBufferIndex + 0] = curTri.vindex[0];
+		drawInfo.pIndices[indexBufferIndex + 1] = curTri.vindex[1];
+		drawInfo.pIndices[indexBufferIndex + 2] = curTri.vindex[2];
 
-		pVertices[ vertIndex + 1 ].x = curTri.verts[1].pos.x;
-		pVertices[ vertIndex + 1 ].y = curTri.verts[1].pos.y;
-		pVertices[ vertIndex + 1 ].z = curTri.verts[1].pos.z;
-		pVertices[ vertIndex + 1 ].r = curTri.verts[1].colour.x;
-		pVertices[ vertIndex + 1 ].g = curTri.verts[1].colour.y;
-		pVertices[ vertIndex + 1 ].b = curTri.verts[1].colour.z;
+		//pVertices[ vertIndex + 0 ].x = curTri.verts[0].pos.x;
+		//pVertices[ vertIndex + 0 ].y = curTri.verts[0].pos.y;
+		//pVertices[ vertIndex + 0 ].z = curTri.verts[0].pos.z;
+		//pVertices[ vertIndex + 0 ].r = curTri.verts[0].colour.x;
+		//pVertices[ vertIndex + 0 ].g = curTri.verts[0].colour.y;
+		//pVertices[ vertIndex + 0 ].b = curTri.verts[0].colour.z;
 
-		pVertices[ vertIndex + 2 ].x = curTri.verts[2].pos.x;
-		pVertices[ vertIndex + 2 ].y = curTri.verts[2].pos.y;
-		pVertices[ vertIndex + 2 ].z = curTri.verts[2].pos.z;
-		pVertices[ vertIndex + 2 ].r = curTri.verts[2].colour.x;
-		pVertices[ vertIndex + 2 ].g = curTri.verts[2].colour.y;
-		pVertices[ vertIndex + 2 ].b = curTri.verts[2].colour.z;
+		//pVertices[ vertIndex + 1 ].x = curTri.verts[1].pos.x;
+		//pVertices[ vertIndex + 1 ].y = curTri.verts[1].pos.y;
+		//pVertices[ vertIndex + 1 ].z = curTri.verts[1].pos.z;
+		//pVertices[ vertIndex + 1 ].r = curTri.verts[1].colour.x;
+		//pVertices[ vertIndex + 1 ].g = curTri.verts[1].colour.y;
+		//pVertices[ vertIndex + 1 ].b = curTri.verts[1].colour.z;
+
+		//pVertices[ vertIndex + 2 ].x = curTri.verts[2].pos.x;
+		//pVertices[ vertIndex + 2 ].y = curTri.verts[2].pos.y;
+		//pVertices[ vertIndex + 2 ].z = curTri.verts[2].pos.z;
+		//pVertices[ vertIndex + 2 ].r = curTri.verts[2].colour.x;
+		//pVertices[ vertIndex + 2 ].g = curTri.verts[2].colour.y;
+		//pVertices[ vertIndex + 2 ].b = curTri.verts[2].colour.z;
 
 	}// for ( unsigned int triIndex = 0...
 
 	return;
+}
+
+
+std::string cVAOManager::getLastError(bool bAndClear /*=true*/)
+{
+	std::string theLastError = this->m_lastErrorString;
+
+	if ( bAndClear )
+	{
+		this->m_lastErrorString = "";
+	}
+
+	return theLastError;
+}
+
+void cVAOManager::m_AppendTextToLastError(std::string text, bool addNewLineBefore /*=true*/)
+{
+	std::stringstream ssError;
+	ssError << this->m_lastErrorString;
+
+	if ( addNewLineBefore )
+	{
+		ssError << std::endl;
+	}
+
+	ssError << text;
+
+	this->m_lastErrorString = ssError.str();
+
+	return;
+
 }
