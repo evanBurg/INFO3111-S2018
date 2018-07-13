@@ -6,12 +6,14 @@
     <ClCompile Include="cShaderManager.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="TheMain.cpp" />
+    <ClCompile Include="cVAOManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cMeshObject.h" />
     <ClInclude Include="cShaderManager.h" />
     <ClInclude Include="globalOpenGLStuff.h" />
     <ClInclude Include="linmath.h" />
+    <ClInclude Include="cVAOManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Shaders">
