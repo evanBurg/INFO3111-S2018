@@ -15,14 +15,14 @@ sModelDrawInfo::sModelDrawInfo()
 {
 	this->VAO_ID = 0;
 
-	this->VertexBufferID;
-	this->VertexBuffer_Start_Index;
-	this->numberOfVertices;
+	this->VertexBufferID = 0;
+	this->VertexBuffer_Start_Index = 0;
+	this->numberOfVertices = 0;
 
-	this->IndexBufferID;
-	this->IndexBuffer_Start_Index;
-	this->numberOfIndices;
-	this->numberOfTriangles;
+	this->IndexBufferID = 0;
+	this->IndexBuffer_Start_Index = 0;
+	this->numberOfIndices = 0;
+	this->numberOfTriangles = 0;
 
 	// The "local" (i.e. "CPU side" temporary array)
 	this->pVertices = 0;	// or NULL
@@ -33,12 +33,15 @@ sModelDrawInfo::sModelDrawInfo()
 
 bool cVAOManager::LoadModelIntoVAO(
 		std::string fileName, 
-		sModelDrawInfo &drawInfo)
+		sModelDrawInfo &drawInfo,
+	    unsigned int shaderProgramID)
 
 {
 	// Load the model from file
 	// (We do this here, since if we can't load it, there's 
 	//	no point in doing anything else, right?)
+
+	drawInfo.meshName = fileName;
 
 	if ( ! this->m_LoadTheModel( fileName, drawInfo ) )
 	{
@@ -79,6 +82,50 @@ bool cVAOManager::LoadModelIntoVAO(
 				  GL_STATIC_DRAW);
 
 
+	// Copy the index buffer into the video card, too
+	// Create an index buffer.
+	glGenBuffers( 1, &(drawInfo.IndexBufferID) );
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, drawInfo.IndexBufferID);
+
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER,			// Type: Index element array
+	              sizeof( unsigned int ) * drawInfo.numberOfIndices, 
+	              (GLvoid*) drawInfo.pIndices,
+                  GL_STATIC_DRAW );
+
+	// Set the vertex attributes.
+
+	GLint vpos_location = glGetAttribLocation(shaderProgramID, "vPos");	// program
+	GLint vcol_location = glGetAttribLocation(shaderProgramID, "vCol");	// program;
+
+	// Set the vertex attributes for this shader
+	glEnableVertexAttribArray(vpos_location);	// vPos
+	glVertexAttribPointer( vpos_location, 3,		// vPos
+						   GL_FLOAT, GL_FALSE,
+						   sizeof(float) * 6, 
+						   ( void* )0);
+
+	glEnableVertexAttribArray(vcol_location);	// vCol
+	glVertexAttribPointer( vcol_location, 3,		// vCol
+						   GL_FLOAT, GL_FALSE,
+						   sizeof(float) * 6, 
+						   ( void* )( sizeof(float) * 3 ));
+
+
+	// Now that all the parts are set up, set the VAO to zero
+	glBindVertexArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	glDisableVertexAttribArray(vpos_location);
+	glDisableVertexAttribArray(vcol_location);
+
+
+	// Store the draw information into the map
+	this->m_map_ModelName_to_VAOID[ drawInfo.meshName ] = drawInfo;
+
+
 	return true;
 }
 
@@ -88,9 +135,20 @@ bool cVAOManager::FindDrawInfoByModelName(
 		std::string filename,
 		sModelDrawInfo &drawInfo) 
 {
+	std::map< std::string /*model name*/,
+			sModelDrawInfo /* info needed to draw*/ >::iterator 
+		itDrawInfo = this->m_map_ModelName_to_VAOID.find( filename );
 
+	// Find it? 
+	if ( itDrawInfo == this->m_map_ModelName_to_VAOID.end() )
+	{
+		// Nope
+		return false;
+	}
 
-
+	// Else we found the thing to draw
+	// ...so 'return' that information
+	drawInfo = itDrawInfo->second;
 	return true;
 }
 
@@ -109,7 +167,7 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 		std::stringstream ssError;
 		ssError << "Can't open >" << fileName << "< file." << std::endl;
 		this->m_AppendTextToLastError(ssError.str());
-		return;
+		return false;
 	}
 
 	std::string temp; 
@@ -178,6 +236,27 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 		vecTempPlyVerts.push_back(tempVert);
 	}
 
+	// Create a local vertex array
+	// Note: The format the file (ply) is DIFFERENT from this array:
+	// - sVertPly was made to match the file format
+	// - sVert was made to match the shader vertex attrib format
+
+	drawInfo.pVertices = new sVert[drawInfo.numberOfVertices];
+	// Optional clear array to zero 
+	//memset( drawInfo.pVertices, 0, sizeof(sVert) * drawInfo.numberOfVertices);
+
+	for ( unsigned int index = 0; index != drawInfo.numberOfVertices; index++ )
+	{
+		drawInfo.pVertices[index].x = vecTempPlyVerts[index].pos.x;
+		drawInfo.pVertices[index].y = vecTempPlyVerts[index].pos.y;
+		drawInfo.pVertices[index].z = vecTempPlyVerts[index].pos.z;
+
+		drawInfo.pVertices[index].r = vecTempPlyVerts[index].colour.r;
+		drawInfo.pVertices[index].g = vecTempPlyVerts[index].colour.g;
+		drawInfo.pVertices[index].b = vecTempPlyVerts[index].colour.b;
+	}// for ( unsigned int index...
+
+
 	struct sTriPly
 	{
 		unsigned int vindex[3];		// the 3 indices
@@ -202,7 +281,8 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 		//tempTriangle.verts[2] = vecTempPlyVerts[ tempTriangle.vindex[2] ];
 
 		vecTempPlyTriangles.push_back( tempTriangle );
-	}
+	}//for ( unsigned int index...
+
 	
 	// NOW, we need to put them into the vertex array buffer that 
 	//	will be passed to OpenGL. Why? 
@@ -214,7 +294,9 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 
 	// sVert* pVertices = 0;
 //	pVertices = new sVert[::g_NumberOfVertsToDraw];
-	drawInfo.pVertices = new sVert[drawInfo.numberOfIndices];
+	drawInfo.pIndices = new unsigned int[drawInfo.numberOfIndices];
+	// Optional clear array to zero 
+	//memset( drawInfo.pIndices, 0, sizeof(unsigned int) * drawInfo.numberOfIndices);
 
 	// Allocate on the HEAP, so infinite size... 
 	// delete pVertices			/// error!
@@ -239,24 +321,24 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 		//pVertices[ vertIndex + 0 ].r = curTri.verts[0].colour.x;
 		//pVertices[ vertIndex + 0 ].g = curTri.verts[0].colour.y;
 		//pVertices[ vertIndex + 0 ].b = curTri.verts[0].colour.z;
-
+//
 		//pVertices[ vertIndex + 1 ].x = curTri.verts[1].pos.x;
 		//pVertices[ vertIndex + 1 ].y = curTri.verts[1].pos.y;
 		//pVertices[ vertIndex + 1 ].z = curTri.verts[1].pos.z;
 		//pVertices[ vertIndex + 1 ].r = curTri.verts[1].colour.x;
 		//pVertices[ vertIndex + 1 ].g = curTri.verts[1].colour.y;
 		//pVertices[ vertIndex + 1 ].b = curTri.verts[1].colour.z;
-
+//
 		//pVertices[ vertIndex + 2 ].x = curTri.verts[2].pos.x;
 		//pVertices[ vertIndex + 2 ].y = curTri.verts[2].pos.y;
 		//pVertices[ vertIndex + 2 ].z = curTri.verts[2].pos.z;
 		//pVertices[ vertIndex + 2 ].r = curTri.verts[2].colour.x;
 		//pVertices[ vertIndex + 2 ].g = curTri.verts[2].colour.y;
 		//pVertices[ vertIndex + 2 ].b = curTri.verts[2].colour.z;
-
+//
 	}// for ( unsigned int triIndex = 0...
 
-	return;
+	return true;
 }
 
 

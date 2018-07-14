@@ -9,6 +9,8 @@
 
 #include "cShaderManager.h"
 
+#include "cVAOManager.h"
+
 //#include "linmath.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -53,10 +55,10 @@ unsigned int g_NumberOfVertices = 0;		// From file
 unsigned int g_NumberOfTriangles = 0;		// From file
 
 
-// Function signature for loading the ply model
-// Will load model and place into pVertices array
-// (overwriting whatever was there)
-void LoadTheModel(std::string fileName);
+//// Function signature for loading the ply model
+//// Will load model and place into pVertices array
+//// (overwriting whatever was there)
+//void LoadTheModel(std::string fileName);
 
 // A vector of POINTERS to mesh objects...
 std::vector< cMeshObject* > g_vec_pMeshObjects;
@@ -64,27 +66,29 @@ void LoadObjectsIntoScene(void);
 
 cShaderManager* g_pTheShaderManager = 0;	// NULL, 0, nullptr
 
-static const char* vertex_shader_text =
-"uniform mat4 MVP;\n"
-"uniform vec3 meshColour; \n"
-"attribute vec3 vCol;\n"		// float r, g, b;
-"attribute vec3 vPos;\n"		// float x, y, z;
-"varying vec3 color;\n"
-"void main()\n"
-"{\n"
-"    vec3 newVertex = vPos;				\n"
-"    gl_Position = MVP * vec4(newVertex, 1.0);\n"
-"    color = meshColour;\n"				// color = vCol;
-"    color *= 0.01f;\n"
-"    color += vCol;\n"
-"}\n";
+cVAOManager* g_pTheVAOManager = 0;
 
-static const char* fragment_shader_text =
-"varying vec3 color;\n"
-"void main()\n"
-"{\n"
-"    gl_FragColor = vec4(color, 1.0);\n"
-"}\n";
+//static const char* vertex_shader_text =
+//"uniform mat4 MVP;\n"
+//"uniform vec3 meshColour; \n"
+//"attribute vec3 vCol;\n"		// float r, g, b;
+//"attribute vec3 vPos;\n"		// float x, y, z;
+//"varying vec3 color;\n"
+//"void main()\n"
+//"{\n"
+//"    vec3 newVertex = vPos;				\n"
+//"    gl_Position = MVP * vec4(newVertex, 1.0);\n"
+//"    color = meshColour;\n"				// color = vCol;
+//"    color *= 0.01f;\n"
+//"    color += vCol;\n"
+//"}\n";
+
+//static const char* fragment_shader_text =
+//"varying vec3 color;\n"
+//"void main()\n"
+//"{\n"
+//"    gl_FragColor = vec4(color, 1.0);\n"
+//"}\n";
 
 static void error_callback(int error, const char* description)
 {
@@ -104,11 +108,11 @@ void ProcessInput( glm::vec3 &cameraEye,
 int main(void)
 {
 	GLFWwindow* window;
-	GLuint vertex_buffer, vertex_shader, fragment_shader;
+	//GLuint vertex_buffer, vertex_shader, fragment_shader;
 	//GLuint program;
 	GLint mvp_location; 
-	GLint vpos_location;
-	GLint vcol_location;
+	//GLint vpos_location;
+	//GLint vcol_location;
 
 	GLint meshColour_UniLoc = -1; 
 
@@ -129,7 +133,7 @@ int main(void)
 	glfwSwapInterval(1);
 
 //	LoadTheModel("bun_zipper_res2_xyz.ply");
-	LoadTheModel("ssj100_xyz.ply");
+//	LoadTheModel("ssj100_xyz.ply");
 //	LoadTheModel("building_xyz.ply");
 
 	// Load objects into scene...
@@ -177,6 +181,8 @@ int main(void)
 	GLuint shadProgID
 		= ::g_pTheShaderManager->getIDFromFriendlyName("simpleshader");
 
+	::g_pTheShaderManager->useShaderProgram(shadProgID);
+
 	//vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 	//glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
 	//glCompileShader(vertex_shader);
@@ -193,8 +199,9 @@ int main(void)
 	// "uniform mat4 MVP;\n"
 	// "uniform vec3 meshColour; \n"
 	mvp_location = glGetUniformLocation(shadProgID, "MVP");		// program
-	vpos_location = glGetAttribLocation(shadProgID, "vPos");	// program
-	vcol_location = glGetAttribLocation(shadProgID, "vCol");	// program
+
+	//vpos_location = glGetAttribLocation(shadProgID, "vPos");	// program
+	//vcol_location = glGetAttribLocation(shadProgID, "vCol");	// program
 
 	// If it returns -1, then it didn't find it.
 	meshColour_UniLoc = glGetUniformLocation(3, "meshColour");
@@ -203,17 +210,43 @@ int main(void)
 //	float x, y, z;		// added "z"
 //	float r, g, b;
 //};
-	glEnableVertexAttribArray(vpos_location);	// vPos
-	glVertexAttribPointer(vpos_location, 3,		// vPos
-						   GL_FLOAT, GL_FALSE,
-						   sizeof(float) * 6, 
-						   ( void* )0);
 
-	glEnableVertexAttribArray(vcol_location);	// vCol
-	glVertexAttribPointer(vcol_location, 3,		// vCol
-						   GL_FLOAT, GL_FALSE,
-						   sizeof(float) * 6, 
-						   ( void* )( sizeof(float) * 3 ));
+	//glEnableVertexAttribArray(vpos_location);	// vPos
+	//glVertexAttribPointer(vpos_location, 3,		// vPos
+	//					   GL_FLOAT, GL_FALSE,
+	//					   sizeof(float) * 6, 
+	//					   ( void* )0);
+
+	//glEnableVertexAttribArray(vcol_location);	// vCol
+	//glVertexAttribPointer(vcol_location, 3,		// vCol
+	//					   GL_FLOAT, GL_FALSE,
+	//					   sizeof(float) * 6, 
+	//					   ( void* )( sizeof(float) * 3 ));
+
+
+	::g_pTheVAOManager = new cVAOManager();
+	
+//	"bun_zipper_res2_xyz.ply", "ssj100_xyz.ply", "building_xyz.ply"
+
+	sModelDrawInfo bunny;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "bun_zipper_res2_xyz.ply", bunny, shadProgID ) )
+	{
+		std::cout << "Error: Problem loading model into VAO" << std::endl;
+		// We'll keep going as we might be able to load other models?
+	}
+	sModelDrawInfo airplane;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "ssj100_xyz.ply", airplane, shadProgID ) )
+	{
+		std::cout << "Error: Problem loading model into VAO" << std::endl;
+		// We'll keep going as we might be able to load other models?
+	}
+	sModelDrawInfo cow;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "cow_xyz.ply", airplane, shadProgID ) )
+	{
+		std::cout << "Error: Problem loading model into VAO" << std::endl;
+		// We'll keep going as we might be able to load other models?
+	}
+
 
 
 	// If you want to draw lines that aren't filled, you 
@@ -360,14 +393,33 @@ int main(void)
 
 //			glUseProgram(shadProgID);
 //			::g_pTheShaderManager->useShaderProgram("simpleshader");
-			::g_pTheShaderManager->useShaderProgram( shadProgID );
+//			::g_pTheShaderManager->useShaderProgram( shadProgID );
 
 	//		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, ( const GLfloat* )mvp);
 			glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
 
 
 	//		glDrawArrays(GL_TRIANGLES, 0, 3);
-			glDrawArrays(GL_TRIANGLES, 0, ::g_NumberOfVertsToDraw);
+	//		glDrawArrays(GL_TRIANGLES, 0, ::g_NumberOfVertsToDraw);
+
+			// Figure out what model we are loading
+			sModelDrawInfo modelInfo;
+			if ( ::g_pTheVAOManager->FindDrawInfoByModelName( pCurMesh->meshName, modelInfo ) )
+			{	// We found something
+
+				// Connect the buffers + vertex attribs to this particular model
+				glBindVertexArray( modelInfo.VAO_ID ); 
+
+				// Draw whatever is in that buffer
+				glDrawElements( GL_TRIANGLES, 
+								modelInfo.numberOfIndices,
+								GL_UNSIGNED_INT,			// What type is the index array. Ours is "unsigned int"
+								0 );
+
+				// Unbind the buffers + vertex attribs
+				glBindVertexArray( 0 );
+			}
+			// Else we DON'T draw it
 
 		}// for(...
 
@@ -569,14 +621,14 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "bunny.ply";
+		pTemp->meshName = "cow_xyz.ply";
 
 		pTemp->pos = glm::vec3( 1.0f, 0.0f, 0.0f );
 		pTemp->colour = glm::vec4( 142.0f/255.0f, 
 								   205.0f/255.0f,
 									49.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
-		pTemp->scale = 1.0f;
+		pTemp->scale = 0.05f;
 		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
@@ -585,14 +637,14 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "dolphin.ply";
+		pTemp->meshName = "bun_zipper_res2_xyz.ply";
 
 		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
 		pTemp->colour = glm::vec4( 205.0f/255.0f,
 								   142.0f/255.0f, 
 									49.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
-		pTemp->scale = 0.5f;
+		pTemp->scale = 2.0f;
 		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
@@ -601,7 +653,7 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "terrain.ply";
+		pTemp->meshName = "ssj100_xyz.ply";
 
 		pTemp->pos = glm::vec3( -1.0f, 0.0f, 0.0f );
 		pTemp->colour = glm::vec4( 142.0f/255.0f, 

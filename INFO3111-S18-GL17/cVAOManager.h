@@ -20,6 +20,9 @@ struct sVert
 struct sModelDrawInfo
 {
 	sModelDrawInfo(); 
+
+	std::string meshName;
+
 	unsigned int VAO_ID;
 
 	unsigned int VertexBufferID;
@@ -43,7 +46,8 @@ class cVAOManager
 public:
 
 	bool LoadModelIntoVAO(std::string fileName, 
-						  sModelDrawInfo &drawInfo);
+						  sModelDrawInfo &drawInfo, 
+						  unsigned int shaderProgramID);
 
 	// We don't want to return an int, likely
 	bool FindDrawInfoByModelName(std::string filename,
@@ -60,7 +64,6 @@ private:
 	// Loads the ply model file into a temporary array
 	bool m_LoadTheModel( std::string fileName, 
 						 sModelDrawInfo &drawInfo);
-
 
 	std::string m_lastErrorString;
 	void m_AppendTextToLastError(std::string text, bool addNewLineBefore = true);
