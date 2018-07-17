@@ -251,6 +251,12 @@ int main(void)
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
 	}
+	sModelDrawInfo terrain;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "CrappyTerrain.ply", terrain, shadProgID ) )
+	{
+		std::cout << "Error: Problem loading model into VAO" << std::endl;
+		// We'll keep going as we might be able to load other models?
+	}
 
 	// If you want to draw lines that aren't filled, you 
 	//	can change the "polygon mode" to "LINE" 
@@ -620,7 +626,22 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 //std::vector< cMeshObject* > g_vec_pMeshObjects;
 void LoadObjectsIntoScene(void)
 {
-	// Add an object into the "scene"
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject(); 
+
+		pTemp->meshName = "CrappyTerrain.ply";
+
+		pTemp->pos = glm::vec3( 0.0f, -10.0f, 0.0f );
+		pTemp->colour = glm::vec4( 142.0f/255.0f, 
+								   205.0f/255.0f,
+									49.0f/255.0f,
+									 1.0f );		// Transparency 'alpha'
+		pTemp->scale = 1.0f;
+		pTemp->isWireframe = false;
+
+		::g_vec_pMeshObjects.push_back( pTemp );
+	}	
+	
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 

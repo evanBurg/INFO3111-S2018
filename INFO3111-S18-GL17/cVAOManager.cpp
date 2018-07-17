@@ -33,7 +33,7 @@ sModelDrawInfo::sModelDrawInfo()
 	glm::vec3 maxValues;
 	glm::vec3 minValues;
 
-//	scale = 1.0/maxExtent;
+//	scale = 5.0/maxExtent;		-> 5x5x5
 	float maxExtent;
 
 	return;
