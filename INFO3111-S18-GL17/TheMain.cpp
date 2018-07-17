@@ -347,11 +347,6 @@ int main(void)
 			//mat4x4_identity(m);
 			matModel = glm::mat4(1.0f);		// because "math"
 
-			//mat4x4_rotate_Z(m, m, );
-			glm::mat4 rotateZ = glm::rotate( glm::mat4(1.0f), 
-											 0.0f, // (float) glfwGetTime(), 
-											 glm::vec3( 0.0f, 0.0, 1.0f ) );
-			matModel = matModel * rotateZ;
 
 			// Place the object in the world at 'this' location
 			glm::mat4 matTranslation 
@@ -360,6 +355,33 @@ int main(void)
 								             pCurMesh->pos.y, 
 								             pCurMesh->pos.z ) );
 			matModel = matModel * matTranslation;
+
+
+			//mat4x4_rotate_Z(m, m, );
+			//*************************************
+			// ROTATE around Z
+			glm::mat4 matRotateZ = glm::rotate( glm::mat4(1.0f), 
+											    pCurMesh->orientation.z, // (float) glfwGetTime(), 
+											    glm::vec3( 0.0f, 0.0f, 1.0f ) );
+			matModel = matModel * matRotateZ;
+			//*************************************
+
+			//*************************************
+			// ROTATE around Y
+			glm::mat4 matRotateY = glm::rotate( glm::mat4(1.0f), 
+											 pCurMesh->orientation.y, // (float) glfwGetTime(), 
+											 glm::vec3( 0.0f, 1.0f, 0.0f ) );
+			matModel = matModel * matRotateY;
+			//*************************************
+
+			//*************************************
+			// ROTATE around X
+			glm::mat4 rotateX = glm::rotate( glm::mat4(1.0f), 
+											 pCurMesh->orientation.x, // (float) glfwGetTime(), 
+											 glm::vec3( 1.0f, 0.0, 0.0f ) );
+			matModel = matModel * rotateX;
+			//*************************************
+
 		
 			// Set up a scaling matrix
 			glm::mat4 matScale = glm::mat4(1.0f);	
@@ -694,6 +716,15 @@ void LoadObjectsIntoScene(void)
 		cMeshObject* pTemp = new cMeshObject(); 
 
 		pTemp->meshName = "ssj100_xyz.ply";
+
+		// 2 * PI   
+		// 1 PI = 180
+		// 0.5 = 90 
+		// 0.25 = 45
+
+
+//		pTemp->orientation.x = 3.14159f * 0.25f;		// YOLO, right? 
+		pTemp->orientation.y = glm::pi<float>() * 0.5f;		// YOLO, right? 
 
 		pTemp->pos = glm::vec3( -1.0f, 0.0f, 0.0f );
 		pTemp->colour = glm::vec4( 142.0f/255.0f, 
