@@ -74,12 +74,11 @@ bool cVAOManager::LoadModelIntoVAO(
 
 //	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, drawInfo.VertexBufferID);
-
 	// sVert vertices[3]
 	glBufferData( GL_ARRAY_BUFFER, 
 				  sizeof(sVert) * drawInfo.numberOfVertices,	// ::g_NumberOfVertsToDraw,	// sizeof(vertices), 
-				  drawInfo.pVertices,							// pVertices,			//vertices, 
-				  GL_STATIC_DRAW);
+				  (GLvoid*) drawInfo.pVertices,							// pVertices,			//vertices, 
+				  GL_STATIC_DRAW );
 
 
 	// Copy the index buffer into the video card, too
@@ -110,7 +109,6 @@ bool cVAOManager::LoadModelIntoVAO(
 						   GL_FLOAT, GL_FALSE,
 						   sizeof(float) * 6, 
 						   ( void* )( sizeof(float) * 3 ));
-
 
 	// Now that all the parts are set up, set the VAO to zero
 	glBindVertexArray(0);
@@ -242,6 +240,7 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 	// - sVert was made to match the shader vertex attrib format
 
 	drawInfo.pVertices = new sVert[drawInfo.numberOfVertices];
+
 	// Optional clear array to zero 
 	//memset( drawInfo.pVertices, 0, sizeof(sVert) * drawInfo.numberOfVertices);
 
@@ -294,7 +293,9 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 
 	// sVert* pVertices = 0;
 //	pVertices = new sVert[::g_NumberOfVertsToDraw];
+
 	drawInfo.pIndices = new unsigned int[drawInfo.numberOfIndices];
+
 	// Optional clear array to zero 
 	//memset( drawInfo.pIndices, 0, sizeof(unsigned int) * drawInfo.numberOfIndices);
 

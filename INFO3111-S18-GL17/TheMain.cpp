@@ -227,27 +227,30 @@ int main(void)
 	::g_pTheVAOManager = new cVAOManager();
 	
 //	"bun_zipper_res2_xyz.ply", "ssj100_xyz.ply", "building_xyz.ply"
-
 	sModelDrawInfo bunny;
 	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "bun_zipper_res2_xyz.ply", bunny, shadProgID ) )
 	{
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
 	}
+	sModelDrawInfo cow;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "cow_xyz.ply", cow, shadProgID ) )
+	{
+		std::cout << "Error: Problem loading model into VAO" << std::endl;
+		// We'll keep going as we might be able to load other models?
+	}	
 	sModelDrawInfo airplane;
 	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "ssj100_xyz.ply", airplane, shadProgID ) )
 	{
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
 	}
-	sModelDrawInfo cow;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "cow_xyz.ply", airplane, shadProgID ) )
+	sModelDrawInfo arena;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "free_arena_ASCII_xyz.ply", arena, shadProgID ) )
 	{
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
 	}
-
-
 
 	// If you want to draw lines that aren't filled, you 
 	//	can change the "polygon mode" to "LINE" 
@@ -637,6 +640,22 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
+		pTemp->meshName = "cow_xyz.ply";
+
+		pTemp->pos = glm::vec3( 2.0f, 1.0f, 0.0f );
+		pTemp->colour = glm::vec4( 142.0f/255.0f, 
+								   205.0f/255.0f,
+									49.0f/255.0f,
+									 1.0f );		// Transparency 'alpha'
+		pTemp->scale = 0.1f;
+		pTemp->isWireframe = true;
+
+		::g_vec_pMeshObjects.push_back( pTemp );
+	}
+
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject(); 
+
 		pTemp->meshName = "bun_zipper_res2_xyz.ply";
 
 		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
@@ -661,6 +680,27 @@ void LoadObjectsIntoScene(void)
 								   205.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
 		pTemp->scale = 1.5f;
+		pTemp->isWireframe = false;
+
+		::g_vec_pMeshObjects.push_back( pTemp );
+	}
+
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject(); 
+
+		pTemp->meshName = "free_arena_ASCII_xyz.ply";
+
+		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
+		pTemp->colour = glm::vec4( 142.0f/255.0f, 
+									49.0f/255.0f,
+								   205.0f/255.0f,
+									 1.0f );		// Transparency 'alpha'
+		// Largest "extent" in this model
+		// is 40.2828 
+		
+		pTemp->scale = 1.0f/40.2828f;
+		// Now my model 1.0 unit in size (-1 to 1)
+
 		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
