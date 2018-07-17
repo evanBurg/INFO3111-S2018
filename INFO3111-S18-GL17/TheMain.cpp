@@ -204,13 +204,17 @@ int main(void)
 	//vcol_location = glGetAttribLocation(shadProgID, "vCol");	// program
 
 	// If it returns -1, then it didn't find it.
-	meshColour_UniLoc = glGetUniformLocation(3, "meshColour");
+	meshColour_UniLoc = glGetUniformLocation(shadProgID, "meshColour");
+	
+	// Shader uniform variables
+	GLint LightPos_UL = glGetUniformLocation(shadProgID, "LightPos");
+
 //struct sVert
 //{
 //	float x, y, z;		// added "z"
 //	float r, g, b;
 //};
-
+//
 	//glEnableVertexAttribArray(vpos_location);	// vPos
 	//glVertexAttribPointer(vpos_location, 3,		// vPos
 	//					   GL_FLOAT, GL_FALSE,
@@ -313,6 +317,9 @@ int main(void)
 
 		// Deal with the keyboard, etc.
 		ProcessInput( cameraEye, cameraTarget, window );
+
+		// In the centre (x & z) and 5 units above that.
+		glUniform3f( LightPos_UL, 0.0f, 5.0f, 0.0f );
 
 		//int state = glfwGetKey(window, GLFW_KEY_D);
 		//if (state == GLFW_PRESS)
@@ -670,9 +677,9 @@ void LoadObjectsIntoScene(void)
 		pTemp->meshName = "cow_xyz.ply";
 
 		pTemp->pos = glm::vec3( 1.0f, 0.0f, 0.0f );
-		pTemp->colour = glm::vec4( 142.0f/255.0f, 
-								   205.0f/255.0f,
-									49.0f/255.0f,
+		pTemp->colour = glm::vec4( 243.0f/255.0f,		
+								     9.0f/255.0f,
+								    25.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
 		pTemp->scale = 0.05f;
 		pTemp->isWireframe = false;
@@ -686,9 +693,9 @@ void LoadObjectsIntoScene(void)
 		pTemp->meshName = "cow_xyz.ply";
 
 		pTemp->pos = glm::vec3( 2.0f, 1.0f, 0.0f );
-		pTemp->colour = glm::vec4( 142.0f/255.0f, 
+		pTemp->colour = glm::vec4( 142.0f/255.0f,	
 								   205.0f/255.0f,
-									49.0f/255.0f,
+								   248.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
 		pTemp->scale = 0.1f;
 		pTemp->isWireframe = true;
@@ -702,9 +709,9 @@ void LoadObjectsIntoScene(void)
 		pTemp->meshName = "bun_zipper_res2_xyz.ply";
 
 		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
-		pTemp->colour = glm::vec4( 205.0f/255.0f,
-								   142.0f/255.0f, 
-									49.0f/255.0f,
+		pTemp->colour = glm::vec4( 1.0f,
+								   1.0f, 
+									1.0f,
 									 1.0f );		// Transparency 'alpha'
 		pTemp->scale = 2.0f;
 		pTemp->isWireframe = false;
@@ -743,9 +750,9 @@ void LoadObjectsIntoScene(void)
 		pTemp->meshName = "free_arena_ASCII_xyz.ply";
 
 		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
-		pTemp->colour = glm::vec4( 142.0f/255.0f, 
-									49.0f/255.0f,
-								   205.0f/255.0f,
+		pTemp->colour = glm::vec4( 244.0f/255.0f,  
+									223.0f/255.0f,
+								    33.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
 		// Largest "extent" in this model
 		// is 40.2828 

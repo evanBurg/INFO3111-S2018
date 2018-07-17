@@ -8,14 +8,20 @@ attribute vec3 vPos;		// float x, y, z;
 uniform mat4 MVP;
 uniform vec3 meshColour; 
 
+// glUniform1f()  pass in 0 or 1 
+uniform bool bUseVertexColour;		// 0 or 1 Really a float
+
 varying vec3 color;
 
 void main()
 {
     vec3 newVertex = vPos;				
     gl_Position = MVP * vec4(newVertex, 1.0);
-		
-    color = meshColour;				// color = vCol;
-    color *= 0.0001f;
-	color += vCol;
+	
+	color = meshColour;	
+	
+	if ( bUseVertexColour )
+	{
+		color = vCol;
+	}
 };

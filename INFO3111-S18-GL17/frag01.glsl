@@ -5,10 +5,22 @@
 // the same as the OpenGL version.
 
 varying vec3 color;
+varying vec3 vertPosInWorld;
+
+// You can keep these here.
+// (They aren't doing anything, yet)
+uniform vec3 LightPos;
+uniform vec3 LightLinearAtten;
+uniform vec3 LightQuadAtten;		// ...
+
 
 void main()
 {
+	
     gl_FragColor = vec4(color, 1.0);
+	
+	
+	
 	
 //	gl_FragColor.rgb *= 0.0001f;		// Almost zero
 	
