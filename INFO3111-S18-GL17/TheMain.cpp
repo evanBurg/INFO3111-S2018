@@ -699,6 +699,7 @@ void LoadObjectsIntoScene(void)
 		// is 40.2828 
 		
 		pTemp->scale = 1.0f/40.2828f;
+
 		// Now my model 1.0 unit in size (-1 to 1)
 
 		pTemp->isWireframe = false;

@@ -27,6 +27,15 @@ sModelDrawInfo::sModelDrawInfo()
 	// The "local" (i.e. "CPU side" temporary array)
 	this->pVertices = 0;	// or NULL
 	this->pIndices = 0;		// or NULL
+
+	// You could store the max and min values of the 
+	//  vertices here (determined when you load them):
+	glm::vec3 maxValues;
+	glm::vec3 minValues;
+
+//	scale = 1.0/maxExtent;
+	float maxExtent;
+
 	return;
 }
 
@@ -217,6 +226,7 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 	{
 		thePlyFile >> tempVert.pos.x >> tempVert.pos.y >> tempVert.pos.z;
 		
+
 //		tempVert.pos.x *= 10.0f;
 //		tempVert.pos.y *= 10.0f;
 //		tempVert.pos.z *= 10.0f;

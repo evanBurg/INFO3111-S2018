@@ -16,6 +16,6 @@ void main()
     gl_Position = MVP * vec4(newVertex, 1.0);
 		
     color = meshColour;				// color = vCol;
-    color *= 0.01f;
+    color *= 0.0001f;
 	color += vCol;
 };
