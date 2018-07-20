@@ -670,10 +670,10 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 	state = glfwGetKey(window, GLFW_KEY_E);	// Down
 	if (state == GLFW_PRESS) { cameraEye.y -= cameraSpeed; }
 
-	std::cout << "Camera (xyz): "  
-			<<cameraEye.x << ", " 
-			<< cameraEye.y << ", "
-			<< cameraEye.z << std::endl;
+	//std::cout << "Camera (xyz): "  
+	//		<<cameraEye.x << ", " 
+	//		<< cameraEye.y << ", "
+	//		<< cameraEye.z << std::endl;
 	return;
 }
 

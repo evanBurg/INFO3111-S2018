@@ -4,14 +4,21 @@
 // Also, the version of GLSL WASN'T 
 // the same as the OpenGL version.
 
-varying vec3 color;
-varying vec3 vertPosInWorld;
+// FRAGMENT SHADER
 
-// You can keep these here.
-// (They aren't doing anything, yet)
-uniform vec3 LightPos;
-uniform vec3 LightLinearAtten;
-uniform vec3 LightQuadAtten;		// ...
+in vec3 color;				// was varying
+in vec3 vertInWorld;		// was varying
+in mat4 mat4WorldRotOnly;	// To be used on Tuesday
+
+
+// Add these to the FRAGMENT shader
+// (From the day 5 lesson plan word document)
+uniform vec4 lightPosition;
+uniform vec4 lightDirection;
+uniform vec4 lightDiffuse;
+uniform vec4 lightAmbient;
+uniform vec4 lightSpecular; 		// xyz = colour, w = intensity
+uniform vec4 lightAttenAndType;		// x = constant, y = linear, z = quadratic, w = “type”
 
 
 void main()
