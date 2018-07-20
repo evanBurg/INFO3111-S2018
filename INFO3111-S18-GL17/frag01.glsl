@@ -4,15 +4,17 @@
 // Also, the version of GLSL WASN'T 
 // the same as the OpenGL version.
 
-varying vec3 color;
-varying vec3 vertPosInWorld;
+in vec3 color;
+in vec3 vertInWorld;
 
 // You can keep these here.
 // (They aren't doing anything, yet)
-uniform vec3 LightPos;
-uniform vec3 LightLinearAtten;
-uniform vec3 LightQuadAtten;		// ...
-
+uniform vec3 LightPosition;
+uniform vec3 LightDirection;
+uniform vec3 LightDiffuse;		// ...
+uniform vec3 LightAmbient;
+uniform vec3 LightSpecular;
+uniform vec3 LightAttenAndType;
 
 void main()
 {

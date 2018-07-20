@@ -405,7 +405,8 @@ int main(void)
 
 			//mat4x4_mul(mvp, p, m);
 			// mvp = p * view * m; 
-			mvp = matProjection * matView * matModel; 
+			//mvp = matProjection * matView * matModel; 
+
 
 
 			// Also set the colour...
@@ -414,6 +415,17 @@ int main(void)
 						 pCurMesh->colour.y,
 						 pCurMesh->colour.z );
 
+
+			GLint matModelLoc = -1;
+			GLint matProjectionLoc = -1;
+			GLint matViewLoc = -1;
+
+			matModelLoc = glGetUniformLocation(shadProgID, "matModel");
+			matViewLoc = glGetUniformLocation(shadProgID, "matView");
+			matProjectionLoc = glGetUniformLocation(shadProgID, "matProjection");
+			glUniformMatrix4fv(matModelLoc, 1, GL_FALSE, glm::value_ptr(matModel));
+			glUniformMatrix4fv(matProjectionLoc, 1, GL_FALSE, glm::value_ptr(matProjection));
+			glUniformMatrix4fv(matViewLoc, 1, GL_FALSE, glm::value_ptr(matView));
 
 			// Is it wireframe? 
 			if ( pCurMesh->isWireframe )
@@ -434,7 +446,7 @@ int main(void)
 //			::g_pTheShaderManager->useShaderProgram( shadProgID );
 
 	//		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, ( const GLfloat* )mvp);
-			glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
+			//glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
 
 
 	//		glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -624,7 +636,7 @@ int main(void)
 
 void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &window )
 {
-	float cameraSpeed = 0.01f; 
+	float cameraSpeed = 0.1f; 
 
 	int state = glfwGetKey(window, GLFW_KEY_D);
 	if (state == GLFW_PRESS) { cameraEye.x += cameraSpeed; }
