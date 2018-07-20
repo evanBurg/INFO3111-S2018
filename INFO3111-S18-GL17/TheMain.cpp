@@ -290,6 +290,12 @@ int main(void)
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
 	}
+	sModelDrawInfo light;
+	if (!::g_pTheVAOManager->LoadModelIntoVAO("isosphere_xyz.ply", light, shadProgID))
+	{
+		std::cout << "Error: Problem loading model into VAO" << std::endl;
+		// We'll keep going as we might be able to load other models?
+	}
 
 	// If you want to draw lines that aren't filled, you 
 	//	can change the "polygon mode" to "LINE" 
@@ -742,6 +748,7 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 	if ( glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS )
 	{
 		::g_L1.position.z += 0.1f;		
+		//TEST CONFLICT
 	}
 	if ( glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS )
 	{
@@ -838,6 +845,22 @@ void LoadObjectsIntoScene(void)
 		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
+	}
+
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject();
+
+		pTemp->meshName = "isosphere_xyz.ply";
+
+		pTemp->pos = glm::vec3(5.0f, 3.0f, 0.0f);
+		pTemp->colour = glm::vec4(1.0f,
+			1.0f,
+			1.0f,
+			1.0f);		// Transparency 'alpha'
+		pTemp->scale = 2.0f;
+		pTemp->isWireframe = false;
+
+		::g_vec_pMeshObjects.push_back(pTemp);
 	}
 
 	{// Add an object into the "scene"
