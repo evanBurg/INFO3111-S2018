@@ -200,6 +200,13 @@ int main(void)
 	// "uniform vec3 meshColour; \n"
 	mvp_location = glGetUniformLocation(shadProgID, "MVP");		// program
 
+	//uniform mat4 matModel;
+	//uniform mat4 matView;
+	//uniform mat4 matProjection;
+	GLint matModel_UniLoc = glGetUniformLocation(shadProgID, "matModel");
+	GLint matView_Uniloc = glGetUniformLocation(shadProgID, "matView");
+	GLint matProj_Uniloc = glGetUniformLocation(shadProgID, "matProjection");
+
 	//vpos_location = glGetAttribLocation(shadProgID, "vPos");	// program
 	//vcol_location = glGetAttribLocation(shadProgID, "vCol");	// program
 
@@ -405,8 +412,6 @@ int main(void)
 
 			//mat4x4_mul(mvp, p, m);
 			// mvp = p * view * m; 
-			//mvp = matProjection * matView * matModel; 
-
 
 
 			// Also set the colour...
@@ -446,7 +451,6 @@ int main(void)
 //			::g_pTheShaderManager->useShaderProgram( shadProgID );
 
 	//		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, ( const GLfloat* )mvp);
-			//glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
 
 
 	//		glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -656,10 +660,10 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 	state = glfwGetKey(window, GLFW_KEY_E);	// Down
 	if (state == GLFW_PRESS) { cameraEye.y -= cameraSpeed; }
 
-	std::cout << "Camera (xyz): "  
-			<<cameraEye.x << ", " 
-			<< cameraEye.y << ", "
-			<< cameraEye.z << std::endl;
+	//std::cout << "Camera (xyz): "  
+	//		<<cameraEye.x << ", " 
+	//		<< cameraEye.y << ", "
+	//		<< cameraEye.z << std::endl;
 	return;
 }
 

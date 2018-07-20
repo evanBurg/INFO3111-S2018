@@ -9,19 +9,22 @@ uniform mat4 matModel;
 uniform mat4 matView;
 uniform mat4 matProjection;
 
-//uniform mat4 MVP;
 uniform vec3 meshColour; 
 
 // glUniform1f()  pass in 0 or 1 
 uniform bool bUseVertexColour;		// 0 or 1 Really a float
 
-out vec3 color;
-out vec3 vertInWorld;
-out mat4 mat4WorldRotOnly;
+
+// Being passed to next shader stage... 
+out vec3 color;				// was varying
+out vec3 vertInWorld;		// was varying
+out mat4 mat4WorldRotOnly;	// To be used on Tuesday
+>>>>>>> 893b7aaf73beaad1eb5f4d7d6530551542c36ac0
 
 void main()
 {
     vec3 newVertex = vPos;				
+
 	mat4 matMVP = matProjection * matView * matModel;
     gl_Position = matMVP * vec4(newVertex, 1.0);
 	
