@@ -23,6 +23,9 @@
 
 void ShutErDown(void);
 
+cMeshObject* g_pTheLightMesh = 0;		// or NULL
+
+
 //static const struct
 //{
 //	float x, y;
@@ -290,8 +293,8 @@ int main(void)
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
 	}
-	sModelDrawInfo light;
-	if (!::g_pTheVAOManager->LoadModelIntoVAO("isosphere_xyz.ply", light, shadProgID))
+	sModelDrawInfo sphere;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "isosphere_xyz.ply", sphere, shadProgID ) )
 	{
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
@@ -389,6 +392,10 @@ int main(void)
 					 ::g_L1.attenLinear, 
 					 ::g_L1.attenQuad, 
 					 0.0f );		// Ignore the "type" for now.
+
+
+		// move that light mesh to where the light is at, yo
+		::g_pTheLightMesh->pos = ::g_L1.position;
 
 
 		unsigned int numberOfObjects = 
@@ -783,6 +790,25 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 //std::vector< cMeshObject* > g_vec_pMeshObjects;
 void LoadObjectsIntoScene(void)
 {
+
+
+	{// Add an object into the "scene"
+		::g_pTheLightMesh = new cMeshObject(); 
+
+		::g_pTheLightMesh->meshName = "isosphere_xyz.ply";
+
+		::g_pTheLightMesh->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
+		::g_pTheLightMesh->colour = glm::vec4( 142.0f/255.0f, 
+								   205.0f/255.0f,
+									49.0f/255.0f,
+									 1.0f );		// Transparency 'alpha'
+		::g_pTheLightMesh->scale = 0.1f;
+		::g_pTheLightMesh->isWireframe = false;
+
+		::g_vec_pMeshObjects.push_back( ::g_pTheLightMesh );
+	}	
+
+
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
@@ -845,22 +871,6 @@ void LoadObjectsIntoScene(void)
 		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
-	}
-
-	{// Add an object into the "scene"
-		cMeshObject* pTemp = new cMeshObject();
-
-		pTemp->meshName = "isosphere_xyz.ply";
-
-		pTemp->pos = glm::vec3(5.0f, 3.0f, 0.0f);
-		pTemp->colour = glm::vec4(1.0f,
-			1.0f,
-			1.0f,
-			1.0f);		// Transparency 'alpha'
-		pTemp->scale = 2.0f;
-		pTemp->isWireframe = false;
-
-		::g_vec_pMeshObjects.push_back(pTemp);
 	}
 
 	{// Add an object into the "scene"
