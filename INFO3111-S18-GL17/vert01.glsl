@@ -19,7 +19,6 @@ uniform bool bUseVertexColour;		// 0 or 1 Really a float
 out vec3 color;				// was varying
 out vec3 vertInWorld;		// was varying
 out mat4 mat4WorldRotOnly;	// To be used on Tuesday
->>>>>>> 893b7aaf73beaad1eb5f4d7d6530551542c36ac0
 
 void main()
 {
