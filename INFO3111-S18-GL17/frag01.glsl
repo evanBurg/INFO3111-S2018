@@ -13,8 +13,8 @@ in mat4 mat4WorldRotOnly;	// To be used on Tuesday
 
 // Add these to the FRAGMENT shader
 // (From the day 5 lesson plan word document)
-uniform vec4 lightPosition;
-uniform vec4 lightDirection;
+uniform vec3 lightPosition;
+uniform vec3 lightDirection;
 uniform vec4 lightDiffuse;
 uniform vec4 lightAmbient;
 uniform vec4 lightSpecular; 		// xyz = colour, w = intensity
@@ -22,8 +22,15 @@ uniform vec4 lightAttenAndType;		// x = constant, y = linear, z = quadratic, w =
 
 void main()
 {
+	vec3 outDiffuse = color;
 	
-    gl_FragColor = vec4(color, 1.0);
+	float lightDistance = abs(distance(vertInWorld, lightPosition));
+
+	
+	float attenuation = 1.0f / (lightAttenAndType.x + lightAttenAndType.y * lightDistance + lightAttenAndType.z * lightDistance * lightDistance);
+	outDiffuse.rgb *= attenuation;
+	
+    gl_FragColor = vec4(outDiffuse, 1.0);
 	
 	
 	

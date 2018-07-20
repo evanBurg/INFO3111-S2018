@@ -214,7 +214,18 @@ int main(void)
 	meshColour_UniLoc = glGetUniformLocation(shadProgID, "meshColour");
 	
 	// Shader uniform variables
-	GLint LightPos_UL = glGetUniformLocation(shadProgID, "LightPos");
+	GLint LightPos_UL = glGetUniformLocation(shadProgID, "LightPosition");
+	GLint LightAtten_UL = glGetUniformLocation(shadProgID, "LightAttenAndType");
+
+	struct sLight {
+		glm::vec3 position;
+		float attenLinear;
+		float attenConst;
+		float attenQuad;
+
+	};
+
+
 
 //struct sVert
 //{
@@ -292,6 +303,14 @@ int main(void)
 
 	while (!glfwWindowShouldClose(window))
 	{
+		sLight lightOne;
+		lightOne.position = glm::vec3(5.0f, 3.0f, 0.0f);
+		lightOne.attenConst = 0.0f;
+		lightOne.attenLinear = 1.0f;
+		lightOne.attenQuad = 1.0f;
+
+		glUniform3f(LightPos_UL, lightOne.position.x, lightOne.position.y, lightOne.position.z);
+		glUniform4f(LightAtten_UL, lightOne.attenConst, lightOne.attenLinear, lightOne.attenQuad, 0.0f);
 		float ratio;
 		int width, height;
 		
@@ -324,9 +343,6 @@ int main(void)
 
 		// Deal with the keyboard, etc.
 		ProcessInput( cameraEye, cameraTarget, window );
-
-		// In the centre (x & z) and 5 units above that.
-		glUniform3f( LightPos_UL, 0.0f, 5.0f, 0.0f );
 
 		//int state = glfwGetKey(window, GLFW_KEY_D);
 		//if (state == GLFW_PRESS)
