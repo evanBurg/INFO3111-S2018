@@ -234,10 +234,10 @@ int main(void)
 	GLint LightAttenType_UL = glGetUniformLocation( shadProgID, "lightAttenAndType" );
 
 
-	L1.position = glm::vec3( 5.0f, 3.0f, 0.0f );
-	L1.attenConst = 0.0f;		// NO attenuation
-	L1.attenLinear = 0.1f;		// NO attenuation
-	L1.attenQuad = 0.0f;		// NO attenuation
+	::g_L1.position = glm::vec3( 5.0f, 3.0f, 0.0f );
+	::g_L1.attenConst = 0.0f;		// NO attenuation
+	::g_L1.attenLinear = 0.1f;		// NO attenuation
+	::g_L1.attenQuad = 0.0f;		// NO attenuation
 //struct sVert
 //{
 //	float x, y, z;		// added "z"
@@ -373,12 +373,12 @@ int main(void)
 
 		// Set the lighting for the entire scene...
 		// vec3 lightPosition: 
-		glUniform3f( LightPos_UL, L1.position.x, L1.position.y, L1.position.z );
+		glUniform3f( LightPos_UL, ::g_L1.position.x, ::g_L1.position.y, ::g_L1.position.z );
 		// vec4 lightAttenAndType
 		glUniform4f( LightAttenType_UL, 
-					 L1.attenConst, 
-					 L1.attenLinear, 
-					 L1.attenQuad, 
+					 ::g_L1.attenConst, 
+					 ::g_L1.attenLinear, 
+					 ::g_L1.attenQuad, 
 					 0.0f );		// Ignore the "type" for now.
 
 
@@ -725,11 +725,51 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 		}
 	}
 	if ( glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS )
-	{	// Decrease quad atten by 1%
+	{	// Decrease quadratic atten by 1%
+		g_L1.attenQuad *= 0.99f;			// +1%
 	}
+
 	if ( glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS )
-	{	// Increase quad atten by 1%
+	{	// Increase quadratic atten by 1%
+		if ( g_L1.attenQuad <= 0.0f )	 
+		{ 
+			g_L1.attenQuad = 0.01f;		// Make it a tiny value
+		}
+		else
+		{
+			g_L1.attenQuad *= 1.01f;		// + 1%
+			if ( g_L1.attenQuad >= 1.0f )
+			{
+				g_L1.attenQuad = 1.0f;		// Saturate to 1.0f
+			}
+		}
+	}	
+
+	// Also move the light around
+	if ( glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS )
+	{
+		::g_L1.position.z += 0.1f;		
 	}
+	if ( glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS )
+	{
+		::g_L1.position.z -= 0.1f;		
+	}		
+	if ( glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS )
+	{
+		::g_L1.position.x -= 0.1f;		
+	}	
+	if ( glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS )
+	{
+		::g_L1.position.x += 0.1f;		
+	}		
+	if ( glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS )
+	{
+		::g_L1.position.y += 0.1f;		
+	}		
+	if ( glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS )
+	{
+		::g_L1.position.y -= 0.1f;		
+	}		
 
 
 	//std::cout << "Camera (xyz): "  
