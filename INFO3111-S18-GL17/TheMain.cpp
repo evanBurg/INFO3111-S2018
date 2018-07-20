@@ -90,6 +90,18 @@ cVAOManager* g_pTheVAOManager = 0;
 //"    gl_FragColor = vec4(color, 1.0);\n"
 //"}\n";
 
+// This will get more involved
+struct sLight
+{
+	glm::vec3 position;
+	float attenLinear;
+	float attenConst;
+	float attenQuad;
+};
+
+sLight g_L1;
+
+
 static void error_callback(int error, const char* description)
 {
 	fprintf(stderr, "Error: %s\n", description);
@@ -214,19 +226,18 @@ int main(void)
 	meshColour_UniLoc = glGetUniformLocation(shadProgID, "meshColour");
 	
 	// Shader uniform variables
-	GLint LightPos_UL = glGetUniformLocation(shadProgID, "LightPosition");
-	GLint LightAtten_UL = glGetUniformLocation(shadProgID, "LightAttenAndType");
 
-	struct sLight {
-		glm::vec3 position;
-		float attenLinear;
-		float attenConst;
-		float attenQuad;
-
-	};
+	// The light values...
+	//uniform vec3 lightPosition;
+	//uniform vec4 lightAttenAndType;	
+	GLint LightPos_UL		= glGetUniformLocation( shadProgID, "lightPosition" );
+	GLint LightAttenType_UL = glGetUniformLocation( shadProgID, "lightAttenAndType" );
 
 
-
+	g_L1.position = glm::vec3( 5.0f, 3.0f, 0.0f );
+	g_L1.attenConst = 0.0f;		// NO attenuation
+	g_L1.attenLinear = 0.1f;		// NO attenuation
+	g_L1.attenQuad = 0.0f;		// NO attenuation
 //struct sVert
 //{
 //	float x, y, z;		// added "z"
@@ -309,8 +320,6 @@ int main(void)
 		lightOne.attenLinear = 1.0f;
 		lightOne.attenQuad = 1.0f;
 
-		glUniform3f(LightPos_UL, lightOne.position.x, lightOne.position.y, lightOne.position.z);
-		glUniform4f(LightAtten_UL, lightOne.attenConst, lightOne.attenLinear, lightOne.attenQuad, 0.0f);
 		float ratio;
 		int width, height;
 		
@@ -364,6 +373,17 @@ int main(void)
 							   upVector );		// Up vector
 
 //		glPolygonMode( GL_FRONT_AND_BACK, GL_POINT );
+
+		// Set the lighting for the entire scene...
+		// vec3 lightPosition: 
+		glUniform3f( LightPos_UL, g_L1.position.x, g_L1.position.y, g_L1.position.z );
+		// vec4 lightAttenAndType
+		glUniform4f( LightAttenType_UL, 
+			g_L1.attenConst,
+			g_L1.attenLinear,
+			g_L1.attenQuad,
+					 0.0f );		// Ignore the "type" for now.
+
 
 		unsigned int numberOfObjects = 
 			static_cast<unsigned int>(::g_vec_pMeshObjects.size() );
@@ -467,7 +487,6 @@ int main(void)
 //			::g_pTheShaderManager->useShaderProgram( shadProgID );
 
 	//		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, ( const GLfloat* )mvp);
-
 
 	//		glDrawArrays(GL_TRIANGLES, 0, 3);
 	//		glDrawArrays(GL_TRIANGLES, 0, ::g_NumberOfVertsToDraw);
@@ -675,6 +694,36 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 
 	state = glfwGetKey(window, GLFW_KEY_E);	// Down
 	if (state == GLFW_PRESS) { cameraEye.y -= cameraSpeed; }
+
+
+	// Adjust the lighting
+	if ( glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS )
+	{	// Decrease linear atten by 1%
+		g_L1.attenLinear *= 0.99f;			// -1%
+	}
+
+	if ( glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS )
+	{	// Increase linear atten by 1%
+		if ( g_L1.attenLinear <= 0.0f )	 
+		{ 
+			g_L1.attenLinear = 0.01f;		// Make it a tiny value
+		}
+		else
+		{
+			g_L1.attenLinear *= 1.01f;		// + 1%
+			if ( g_L1.attenLinear >= 1.0f )
+			{
+				g_L1.attenLinear = 1.0f;		// Saturate to 1.0f
+			}
+		}
+	}
+	if ( glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS )
+	{	// Decrease quad atten by 1%
+	}
+	if ( glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS )
+	{	// Increase quad atten by 1%
+	}
+
 
 	//std::cout << "Camera (xyz): "  
 	//		<<cameraEye.x << ", " 

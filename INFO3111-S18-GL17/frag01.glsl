@@ -14,28 +14,40 @@ in mat4 mat4WorldRotOnly;	// To be used on Tuesday
 // Add these to the FRAGMENT shader
 // (From the day 5 lesson plan word document)
 uniform vec3 lightPosition;
-uniform vec3 lightDirection;
+uniform vec4 lightDirection;
 uniform vec4 lightDiffuse;
 uniform vec4 lightAmbient;
-uniform vec4 lightSpecular; 		// xyz = colour, w = intensity
-uniform vec4 lightAttenAndType;		// x = constant, y = linear, z = quadratic, w = “type”
+uniform vec4 lightSpecular; 		// rgb = colour, w = intensity
+// x = constant, y = linear, z = quadratic, w = “type”
+uniform vec4 lightAttenAndType;		
+
+// We'll start up in about 10-15 minutes
+// (around 1:45-ish)
 
 void main()
 {
-	vec3 outDiffuse = color;
+	// Take the colour of the thing, and set the output 
+	//	colour to that to start... 
+	vec3 outDiffuse = color; 
 	
-	float lightDistance = abs(distance(vertInWorld, lightPosition));
+	// Calculate the distance between the light 
+	// and the vertex that this fragment is using
+	float lightDistance = distance( vertInWorld, lightPosition );
+	lightDistance = abs(lightDistance);
 
-	
-	float attenuation = 1.0f / (lightAttenAndType.x + lightAttenAndType.y * lightDistance + lightAttenAndType.z * lightDistance * lightDistance);
+	float attenuation = 1.0f / 
+        ( lightAttenAndType.x 						// 0  
+        + lightAttenAndType.y * lightDistance					// Linear
+        + lightAttenAndType.z * lightDistance * lightDistance );	// Quad
 	outDiffuse.rgb *= attenuation;
-	
+
     gl_FragColor = vec4(outDiffuse, 1.0);
-	
-	
-	
-	
-//	gl_FragColor.rgb *= 0.0001f;		// Almost zero
-	
-//	gl_FragColor.rgb += vec3( 0.23f, 0.420f, 0.69f );
 };
+
+
+
+
+
+
+//	gl_FragColor.rgb *= 0.0001f;		// Almost zero	
+//	gl_FragColor.rgb += vec3( 0.23f, 0.420f, 0.69f );
