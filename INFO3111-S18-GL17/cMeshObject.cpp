@@ -11,6 +11,8 @@ cMeshObject::cMeshObject()
 
 	this->m_AssignUniqueID();
 
+	this->bDontLightObject = false;
+
 	return;
 }
 
@@ -24,6 +26,7 @@ cMeshObject::~cMeshObject()
 unsigned int cMeshObject::m_nextID = 1000;
 
 	//mutable unsigned int uniqueID;
+	//const unsigned int uniqueID = 0;
 
 void cMeshObject::m_AssignUniqueID(void) 
 {

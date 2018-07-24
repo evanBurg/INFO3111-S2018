@@ -167,6 +167,8 @@ int main(void)
 	GLint meshColourRGBA_UniLoc = glGetUniformLocation(shadProgID, "meshColourRGBA");
 	GLint bUse_vColourRGBA_AlphaValue_UniLoc = glGetUniformLocation(shadProgID, "bUse_vColourRGBA_AlphaValue");
 	GLint bUseVertexColour_UniLoc = glGetUniformLocation(shadProgID, "bUseVertexColour");
+
+	GLint bDontLightObject_UniLoc = glGetUniformLocation(shadProgID, "bDontLightObject" );
 	
 	// Shader uniform variables
 
@@ -322,6 +324,14 @@ int main(void)
 			glUniform1f( bUse_vColourRGBA_AlphaValue_UniLoc, GL_FALSE );
 			glUniform1f( bUseVertexColour_UniLoc, GL_TRUE );
 
+			if ( pCurMesh->bDontLightObject )
+			{
+				glUniform1f( bDontLightObject_UniLoc, GL_TRUE );
+			}
+			else 
+			{
+				glUniform1f( bDontLightObject_UniLoc, GL_FALSE );
+			}
 
 
 			// Is it wireframe? 
@@ -523,6 +533,8 @@ void LoadObjectsIntoScene(void)
 									 1.0f );		// Transparency 'alpha'
 		::g_pTheLightMesh->scale = 0.1f;
 		::g_pTheLightMesh->isWireframe = false;
+
+		::g_pTheLightMesh->bDontLightObject = true;
 
 		::g_vec_pMeshObjects.push_back( ::g_pTheLightMesh );
 	}	
