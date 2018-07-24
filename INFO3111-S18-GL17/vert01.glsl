@@ -14,7 +14,6 @@ uniform vec3 meshColour;
 // glUniform1f()  pass in 0 or 1 
 uniform bool bUseVertexColour;		// 0 or 1 Really a float
 
-
 // Being passed to next shader stage... 
 out vec3 color;				// was varying
 out vec3 vertInWorld;		// was varying
@@ -35,7 +34,7 @@ void main()
 	
 	color = meshColour;	
 	
-	if ( bUseVertexColour )
+	if ( !bUseVertexColour )
 	{
 		color = vCol;
 	}

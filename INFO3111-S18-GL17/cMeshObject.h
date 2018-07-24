@@ -10,6 +10,7 @@ class cMeshObject
 {
 public:
 	cMeshObject();
+	cMeshObject(std::string meshName, glm::vec3 pos, glm::vec4 colour, glm::vec3 orientation, float scale, bool wireframe);
     ~cMeshObject();
     std::string meshName;
     glm::vec3 pos;			// 0,0,0 (origin)
@@ -17,6 +18,8 @@ public:
 	glm::vec3 orientation;	// 
     float scale;			// 1.0f
     bool isWireframe;		// false
+	bool isUniformColour;
+	bool isAffectedByLight;
 };
 
 #endif // _cMeshObject_HG_

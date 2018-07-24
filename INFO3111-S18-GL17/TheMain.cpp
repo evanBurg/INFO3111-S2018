@@ -1,3 +1,11 @@
+/**
+* EVAN BURGESS
+* 0781910
+* INFO-3111
+* JULY 23rd, 2018
+*/
+
+
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp> // glm::vec3
 #include <glm/vec4.hpp> // glm::vec4
@@ -10,7 +18,6 @@
 #include "cShaderManager.h"
 
 #include "cVAOManager.h"
-
 //#include "linmath.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -53,6 +60,8 @@ cMeshObject* g_pTheLightMesh = 0;		// or NULL
 //sVert* pVertices = 0;						//  = new sVert[10000];
 //unsigned int g_NumberOfVertsToDraw = 0;		// To draw (on GPU)
 
+
+int selectedLight = 0;
 
 unsigned int g_NumberOfVertices = 0;		// From file
 unsigned int g_NumberOfTriangles = 0;		// From file
@@ -100,10 +109,12 @@ struct sLight
 	float attenLinear;
 	float attenConst;
 	float attenQuad;
+	glm::vec3 color;
 };
 
 sLight g_L1;
-
+sLight g_L2;
+sLight g_L3;
 
 static void error_callback(int error, const char* description)
 {
@@ -113,6 +124,43 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
+	if (key == GLFW_KEY_KP_ADD && action == GLFW_PRESS) {
+		if(selectedLight+1 <= 2)
+			selectedLight += 1;
+
+		::g_vec_pMeshObjects[0]->colour = glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 1.0f);
+		::g_vec_pMeshObjects[1]->colour = glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 1.0f);
+		::g_vec_pMeshObjects[2]->colour = glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 1.0f);
+		::g_vec_pMeshObjects[selectedLight]->colour = glm::vec4(244.0f / 255.0f, 51.0f / 255.0f, 255.0f / 255.0f, 1.0f);
+	}
+	if (key == GLFW_KEY_KP_SUBTRACT && action == GLFW_PRESS) {
+		if (selectedLight - 1 > -1)
+			selectedLight -= 1;
+
+		::g_vec_pMeshObjects[0]->colour = glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 1.0f);
+		::g_vec_pMeshObjects[1]->colour = glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 1.0f);
+		::g_vec_pMeshObjects[2]->colour = glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 1.0f);
+		::g_vec_pMeshObjects[selectedLight]->colour = glm::vec4(244.0f / 255.0f, 51.0f / 255.0f, 255.0f / 255.0f, 1.0f);
+	}
+	if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+		::g_vec_pMeshObjects.clear();
+		LoadObjectsIntoScene();
+		::g_L1.position = glm::vec3(5.0f, 3.0f, 0.0f);
+		::g_L1.attenConst = 0.0f;		// NO attenuation
+		::g_L1.attenLinear = 0.1f;		// NO attenuation
+		::g_L1.attenQuad = 0.0f;		// NO attenuation
+		::g_L1.color = glm::vec3(1.0f, 0.0f, 0.0f);
+		::g_L2.position = glm::vec3(-5.0f, 3.0f, 0.0f);
+		::g_L2.attenConst = 0.0f;		// NO attenuation
+		::g_L2.attenLinear = 0.1f;		// NO attenuation
+		::g_L2.attenQuad = 0.0f;		// NO attenuation
+		::g_L2.color = glm::vec3(0.0f, 1.0f, 0.0f);
+		::g_L3.position = glm::vec3(-5.0f, 0.0f, 5.0f);
+		::g_L3.attenConst = 0.0f;		// NO attenuation
+		::g_L3.attenLinear = 0.1f;		// NO attenuation
+		::g_L3.attenQuad = 0.0f;		// NO attenuation
+		::g_L3.color = glm::vec3(0.0f, 0.0f, 1.0f);
+	}
 }
 
 // Processes input (defined below)
@@ -153,16 +201,6 @@ int main(void)
 
 	// Load objects into scene...
 	LoadObjectsIntoScene();
-
-
-	//// NOTE: OpenGL error checks have been omitted for brevity
-	//glGenBuffers(1, &vertex_buffer);
-	//glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	//// sVert vertices[3]
-	//glBufferData( GL_ARRAY_BUFFER, 
-	//			  sizeof(sVert) * ::g_NumberOfVertsToDraw,	// sizeof(vertices), 
-	//			  pVertices,			//vertices, 
-	//			  GL_STATIC_DRAW);
 
 	// Shader manager thing
 	::g_pTheShaderManager = new cShaderManager();
@@ -229,29 +267,21 @@ int main(void)
 	meshColour_UniLoc = glGetUniformLocation(shadProgID, "meshColour");
 	
 	// Shader uniform variables
-
-	// The light values...
-	//uniform vec3 lightPosition;
-	//uniform vec4 lightAttenAndType;	
-	GLint LightPos_UL		= glGetUniformLocation( shadProgID, "lightPosition" );
-	GLint LightAttenType_UL = glGetUniformLocation( shadProgID, "lightAttenAndType" );
-
-
 	::g_L1.position = glm::vec3( 5.0f, 3.0f, 0.0f );
 	::g_L1.attenConst = 0.0f;		// NO attenuation
 	::g_L1.attenLinear = 0.1f;		// NO attenuation
 	::g_L1.attenQuad = 0.0f;		// NO attenuation
-//struct sVert
-//{
-//	float x, y, z;		// added "z"
-//	float r, g, b;
-//};
-//
-	//glEnableVertexAttribArray(vpos_location);	// vPos
-	//glVertexAttribPointer(vpos_location, 3,		// vPos
-	//					   GL_FLOAT, GL_FALSE,
-	//					   sizeof(float) * 6, 
-	//					   ( void* )0);
+	::g_L1.color = glm::vec3(1.0f, 0.0f, 0.0f);
+	::g_L2.position = glm::vec3( -5.0f, 3.0f, 0.0f );
+	::g_L2.attenConst = 0.0f;		// NO attenuation
+	::g_L2.attenLinear = 0.1f;		// NO attenuation
+	::g_L2.attenQuad = 0.0f;		// NO attenuation
+	::g_L2.color = glm::vec3(0.972f, 1.0f, 0.101f);
+	::g_L3.position = glm::vec3( -5.0f, 0.0f, 5.0f );
+	::g_L3.attenConst = 0.0f;		// NO attenuation
+	::g_L3.attenLinear = 0.1f;		// NO attenuation
+	::g_L3.attenQuad = 0.0f;		// NO attenuation
+	::g_L3.color = glm::vec3(0.0f, 0.0f, 1.0f);
 
 	//glEnableVertexAttribArray(vcol_location);	// vCol
 	//glVertexAttribPointer(vcol_location, 3,		// vCol
@@ -259,30 +289,35 @@ int main(void)
 	//					   sizeof(float) * 6, 
 	//					   ( void* )( sizeof(float) * 3 ));
 
-
 	::g_pTheVAOManager = new cVAOManager();
 	
 //	"bun_zipper_res2_xyz.ply", "ssj100_xyz.ply", "building_xyz.ply"
 	sModelDrawInfo bunny;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "bun_zipper_res2_xyz.ply", bunny, shadProgID ) )
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "mig29.ply", bunny, shadProgID ) )
 	{
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
 	}
 	sModelDrawInfo cow;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "cow_xyz.ply", cow, shadProgID ) )
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "s21.ply", cow, shadProgID ) )
 	{
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
 	}	
 	sModelDrawInfo airplane;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "ssj100_xyz.ply", airplane, shadProgID ) )
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "ssj100.ply", airplane, shadProgID ) )
 	{
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
 	}
 	sModelDrawInfo arena;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "free_arena_ASCII_xyz.ply", arena, shadProgID ) )
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "su47.ply", arena, shadProgID ) )
+	{
+		std::cout << "Error: Problem loading model into VAO" << std::endl;
+		// We'll keep going as we might be able to load other models?
+	}
+	sModelDrawInfo shuttle;
+	if (!::g_pTheVAOManager->LoadModelIntoVAO("SpaceShuttleOrbiter.ply", shuttle, shadProgID))
 	{
 		std::cout << "Error: Problem loading model into VAO" << std::endl;
 		// We'll keep going as we might be able to load other models?
@@ -323,12 +358,6 @@ int main(void)
 
 	while (!glfwWindowShouldClose(window))
 	{
-		sLight lightOne;
-		lightOne.position = glm::vec3(5.0f, 3.0f, 0.0f);
-		lightOne.attenConst = 0.0f;
-		lightOne.attenLinear = 1.0f;
-		lightOne.attenQuad = 1.0f;
-
 		float ratio;
 		int width, height;
 		
@@ -345,17 +374,9 @@ int main(void)
 //		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		
-		// The matModel stuff WAS here. Moved below...
 
-		//mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-//		p = glm::ortho( -1.0f, 1.0f, -1.0f, 1.0f );
 
-		matProjection 
-	      = glm::perspective( 0.6f, 
-							  ratio, 
-							  0.1f,				// Near plane	
-							  100000.0f );		// Far plane
+		matProjection = glm::perspective( 0.6f, ratio, 0.1f,100000.0f );		// Far plane
 
 		matView = glm::mat4(1.0f);
 
@@ -385,17 +406,37 @@ int main(void)
 
 		// Set the lighting for the entire scene...
 		// vec3 lightPosition: 
-		glUniform3f( LightPos_UL, ::g_L1.position.x, ::g_L1.position.y, ::g_L1.position.z );
-		// vec4 lightAttenAndType
-		glUniform4f( LightAttenType_UL, 
-					 ::g_L1.attenConst, 
-					 ::g_L1.attenLinear, 
-					 ::g_L1.attenQuad, 
-					 0.0f );		// Ignore the "type" for now.
+
+	
+		//Light 1
+		GLint lightColour1_UL = glGetUniformLocation(shadProgID, "lightColour1");
+		glUniform3f(lightColour1_UL, ::g_L1.color.r, ::g_L1.color.g, ::g_L1.color.b);
+		GLint LightPos1_UL = glGetUniformLocation(shadProgID, "lightPosition1");
+		glUniform3f(LightPos1_UL, ::g_L1.position.x, ::g_L1.position.y, ::g_L1.position.z);
+		GLint LightAttenType1_UL = glGetUniformLocation(shadProgID, "lightAttenAndType1");
+		glUniform4f(LightAttenType1_UL, ::g_L1.attenConst, ::g_L1.attenLinear, ::g_L1.attenQuad, 0.0f);
+
+		//Light 2
+		GLint LightPos2_UL = glGetUniformLocation(shadProgID, "lightPosition2");
+		glUniform3f(LightPos2_UL, ::g_L2.position.x, ::g_L2.position.y, ::g_L2.position.z);
+		GLint lightColour2_UL = glGetUniformLocation(shadProgID, "lightColour2");
+		glUniform3f(lightColour2_UL, ::g_L2.color.r, ::g_L2.color.g, ::g_L2.color.b);
+		GLint LightAttenType2_UL = glGetUniformLocation(shadProgID, "lightAttenAndType2");
+		glUniform4f(LightAttenType2_UL, ::g_L2.attenConst, ::g_L2.attenLinear, ::g_L2.attenQuad, 0.0f);
+
+		//Light 3
+		GLint lightColour3_UL = glGetUniformLocation(shadProgID, "lightColour3");
+		glUniform3f(lightColour3_UL, ::g_L3.color.r, ::g_L3.color.g, ::g_L3.color.b);
+		GLint LightPos3_UL = glGetUniformLocation(shadProgID, "lightPosition3");
+		glUniform3f( LightPos3_UL, ::g_L3.position.x, ::g_L3.position.y, ::g_L3.position.z );
+		GLint LightAttenType3_UL = glGetUniformLocation(shadProgID, "lightAttenAndType3");
+		glUniform4f( LightAttenType3_UL, ::g_L3.attenConst, ::g_L3.attenLinear, ::g_L3.attenQuad,  0.0f );
 
 
 		// move that light mesh to where the light is at, yo
-		::g_pTheLightMesh->pos = ::g_L1.position;
+		::g_vec_pMeshObjects[0]->pos = ::g_L1.position;
+		::g_vec_pMeshObjects[1]->pos = ::g_L2.position;
+		::g_vec_pMeshObjects[2]->pos = ::g_L3.position;
 
 
 		unsigned int numberOfObjects = 
@@ -406,6 +447,11 @@ int main(void)
 		{
 			cMeshObject* pCurMesh = ::g_vec_pMeshObjects[meshIndex];
 
+			GLint AffectedByLight_UL = glGetUniformLocation(shadProgID, "AffectedByLight");
+			glUniform1f(AffectedByLight_UL, pCurMesh->isAffectedByLight);
+
+			GLint isUniformColour_UL = glGetUniformLocation(shadProgID, "bUseVertexColour");
+			glUniform1f(isUniformColour_UL, pCurMesh->isUniformColour);
 
 			//mat4x4_identity(m);
 			matModel = glm::mat4(1.0f);		// because "math"
@@ -463,6 +509,7 @@ int main(void)
 			// mvp = p * view * m; 
 
 
+
 			// Also set the colour...
 			glUniform3f( meshColour_UniLoc,			// 'meshColour' in shader
 						 pCurMesh->colour.x, 
@@ -494,15 +541,6 @@ int main(void)
 				glEnable( GL_DEPTH_TEST );
 				glEnable( GL_CULL_FACE );
 			}
-
-//			glUseProgram(shadProgID);
-//			::g_pTheShaderManager->useShaderProgram("simpleshader");
-//			::g_pTheShaderManager->useShaderProgram( shadProgID );
-
-	//		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, ( const GLfloat* )mvp);
-
-	//		glDrawArrays(GL_TRIANGLES, 0, 3);
-	//		glDrawArrays(GL_TRIANGLES, 0, ::g_NumberOfVertsToDraw);
 
 			// Figure out what model we are loading
 			sModelDrawInfo modelInfo;
@@ -685,7 +723,8 @@ int main(void)
 //
 //	return;
 //}
-
+int prevTime = 0;
+bool movedThisSecond = false;
 void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &window )
 {
 	float cameraSpeed = 0.1f; 
@@ -708,45 +747,162 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 	state = glfwGetKey(window, GLFW_KEY_E);	// Down
 	if (state == GLFW_PRESS) { cameraEye.y -= cameraSpeed; }
 
+	//PARTY
+	int count = floor(glfwGetTime());
+	if (prevTime != count){
+		prevTime = count;
+		movedThisSecond = false;
+	}
+	else {
+		movedThisSecond = true;
+	}
+	state = glfwGetKey(window, GLFW_KEY_P);	// Down
+	if (state == GLFW_PRESS) { 
+		if (count % 1 == 0 && !movedThisSecond) {
+			::g_L1.position = glm::vec3(((rand() % 10) - (rand() % 10)), 0.0f, ((rand() % 10) - (rand() % 10)));
+			::g_L2.position = glm::vec3(((rand() % 10) - (rand() % 10)), 0.0f, ((rand() % 10) - (rand() % 10)));
+			::g_L3.position = glm::vec3(((rand() % 10) - (rand() % 10)), 0.0f, ((rand() % 10) - (rand() % 10)));
+
+			::g_L1.color = glm::vec3(rand() % 256 / 255.0f, rand() % 256 / 255.0f, rand() % 256 / 255.0f);
+			::g_L2.color = glm::vec3(rand() % 256 / 255.0f, rand() % 256 / 255.0f, rand() % 256 / 255.0f);
+			::g_L3.color = glm::vec3(rand() % 256 / 255.0f, rand() % 256 / 255.0f, rand() % 256 / 255.0f);
+
+			::g_L1.attenConst = 0.0f;
+			::g_L1.attenLinear = 1.0f;
+			::g_L1.attenQuad = 0.0f;
+
+			::g_L2.attenConst = 0.0f;
+			::g_L2.attenLinear = 1.0f;
+			::g_L2.attenQuad = 0.0f;
+
+			::g_L3.attenConst = 0.0f;
+			::g_L3.attenLinear = 1.0f;
+			::g_L3.attenQuad = 0.0f;
+		}
+	}
+	else {
+
+	}
 
 	// Adjust the lighting
 	if ( glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS )
 	{	// Decrease linear atten by 1%
-		g_L1.attenLinear *= 0.99f;			// -1%
+		if (selectedLight == 0) {
+			g_L1.attenLinear *= 0.99f;			// -1%
+		}
+		else if (selectedLight == 1) {
+			g_L2.attenLinear *= 0.99f;			// -1%
+		}
+		else if (selectedLight == 2) {
+			g_L3.attenLinear *= 0.99f;			// -1%
+		}
 	}
 
 	if ( glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS )
 	{	// Increase linear atten by 1%
-		if ( g_L1.attenLinear <= 0.0f )	 
-		{ 
-			g_L1.attenLinear = 0.01f;		// Make it a tiny value
-		}
-		else
-		{
-			g_L1.attenLinear *= 1.01f;		// + 1%
-			if ( g_L1.attenLinear >= 1.0f )
+		if (selectedLight == 0) {
+			if (g_L1.attenLinear <= 0.0f)
 			{
-				g_L1.attenLinear = 1.0f;		// Saturate to 1.0f
+				g_L1.attenLinear = 0.01f;		// Make it a tiny value
+			}
+			else
+			{
+				g_L1.attenLinear *= 1.01f;		// + 1%
+				if (g_L1.attenLinear >= 1.0f)
+				{
+					g_L1.attenLinear = 1.0f;		// Saturate to 1.0f
+				}
+			}
+		}
+		else if (selectedLight == 1) {
+			if (g_L2.attenLinear <= 0.0f)
+			{
+				g_L2.attenLinear = 0.01f;		// Make it a tiny value
+			}
+			else
+			{
+				g_L2.attenLinear *= 1.01f;		// + 1%
+				if (g_L2.attenLinear >= 1.0f)
+				{
+					g_L2.attenLinear = 1.0f;		// Saturate to 1.0f
+				}
+			}
+		}
+		else if (selectedLight == 2) {
+			if (g_L3.attenLinear <= 0.0f)
+			{
+				g_L3.attenLinear = 0.01f;		// Make it a tiny value
+			}
+			else
+			{
+				g_L3.attenLinear *= 1.01f;		// + 1%
+				if (g_L3.attenLinear >= 1.0f)
+				{
+					g_L3.attenLinear = 1.0f;		// Saturate to 1.0f
+				}
 			}
 		}
 	}
 	if ( glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS )
 	{	// Decrease quadratic atten by 1%
-		g_L1.attenQuad *= 0.99f;			// +1%
+		if (selectedLight == 0) {
+			g_L1.attenQuad *= 0.99f;			// +1%
+		}
+		else if (selectedLight == 1) {
+			g_L2.attenQuad *= 0.99f;			// +1%
+
+		}
+		else if (selectedLight == 2) {
+			g_L2.attenQuad *= 0.99f;			// +1%
+
+		}
 	}
 
 	if ( glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS )
 	{	// Increase quadratic atten by 1%
-		if ( g_L1.attenQuad <= 0.0f )	 
-		{ 
-			g_L1.attenQuad = 0.01f;		// Make it a tiny value
-		}
-		else
-		{
-			g_L1.attenQuad *= 1.01f;		// + 1%
-			if ( g_L1.attenQuad >= 1.0f )
+		if (selectedLight == 0) {
+
+			if (g_L1.attenQuad <= 0.0f)
 			{
-				g_L1.attenQuad = 1.0f;		// Saturate to 1.0f
+				g_L1.attenQuad = 0.01f;		// Make it a tiny value
+			}
+			else
+			{
+				g_L1.attenQuad *= 1.01f;		// + 1%
+				if (g_L1.attenQuad >= 1.0f)
+				{
+					g_L1.attenQuad = 1.0f;		// Saturate to 1.0f
+				}
+			}
+		}
+		else if (selectedLight == 1) {
+
+			if (g_L2.attenQuad <= 0.0f)
+			{
+				g_L2.attenQuad = 0.01f;		// Make it a tiny value
+			}
+			else
+			{
+				g_L2.attenQuad *= 1.01f;		// + 1%
+				if (g_L2.attenQuad >= 1.0f)
+				{
+					g_L2.attenQuad = 1.0f;		// Saturate to 1.0f
+				}
+			}
+		}
+		else if (selectedLight == 2) {
+
+			if (g_L3.attenQuad <= 0.0f)
+			{
+				g_L3.attenQuad = 0.01f;		// Make it a tiny value
+			}
+			else
+			{
+				g_L3.attenQuad *= 1.01f;		// + 1%
+				if (g_L3.attenQuad >= 1.0f)
+				{
+					g_L3.attenQuad = 1.0f;		// Saturate to 1.0f
+				}
 			}
 		}
 	}	
@@ -754,28 +910,57 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 	// Also move the light around
 	if ( glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS )
 	{
-		::g_L1.position.z += 0.1f;		
-		//TEST CONFLICT
+		if(selectedLight == 0)
+			::g_L1.position.z += 0.1f;		
+		else if(selectedLight == 1)
+			::g_L2.position.z += 0.1f;
+		else if (selectedLight == 2)
+			::g_L3.position.z += 0.1f;
 	}
 	if ( glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS )
 	{
-		::g_L1.position.z -= 0.1f;		
+		if (selectedLight == 0)
+			::g_L1.position.z -= 0.1f;
+		else if (selectedLight == 1)
+			::g_L2.position.z -= 0.1f;
+		else if (selectedLight == 2)
+			::g_L3.position.z -= 0.1f;
 	}		
 	if ( glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS )
 	{
-		::g_L1.position.x -= 0.1f;		
+		if (selectedLight == 0)
+			::g_L1.position.x -= 0.1f;
+		else if (selectedLight == 1)
+			::g_L2.position.x -= 0.1f;
+		else if (selectedLight == 2)
+			::g_L3.position.x -= 0.1f;
 	}	
 	if ( glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS )
 	{
-		::g_L1.position.x += 0.1f;		
+		if (selectedLight == 0)
+			::g_L1.position.x += 0.1f;
+		else if (selectedLight == 1)
+			::g_L2.position.x += 0.1f;
+		else if (selectedLight == 2)
+			::g_L3.position.x += 0.1f;
 	}		
 	if ( glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS )
 	{
-		::g_L1.position.y += 0.1f;		
+		if (selectedLight == 0)
+			::g_L1.position.y += 0.1f;
+		else if (selectedLight == 1)
+			::g_L2.position.y += 0.1f;
+		else if (selectedLight == 2)
+			::g_L3.position.y += 0.1f;
 	}		
 	if ( glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS )
 	{
-		::g_L1.position.y -= 0.1f;		
+		if (selectedLight == 0)
+			::g_L1.position.y -= 0.1f;
+		else if (selectedLight == 1)
+			::g_L2.position.y -= 0.1f;
+		else if (selectedLight == 2)
+			::g_L3.position.y -= 0.1f;
 	}		
 
 
@@ -791,6 +976,29 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 void LoadObjectsIntoScene(void)
 {
 
+	/**
+	std::ifstream inputFile;
+	inputFile.open("config.txt");
+	if (inputFile.is_open()) {
+		while (inputFile.good())
+		{
+			std::string name;
+			glm::vec3 position;
+			glm::vec4 colour;
+			glm::vec3 orientation;
+			float scale;
+			bool wireframe;
+
+			inputFile >> name;
+			inputFile >> position.x >> position.y >> position.z;
+			inputFile >> colour.r >> colour.g >> colour.b >> colour.a;
+			inputFile >> orientation.x >> orientation.y >> orientation.z;
+			inputFile >> wireframe;
+			inputFile >> scale;
+
+			::g_vec_pMeshObjects.push_back(new cMeshObject(name, position, colour, orientation, scale, wireframe));
+		}
+	}*/
 
 	{// Add an object into the "scene"
 		::g_pTheLightMesh = new cMeshObject(); 
@@ -798,12 +1006,40 @@ void LoadObjectsIntoScene(void)
 		::g_pTheLightMesh->meshName = "isosphere_xyz.ply";
 
 		::g_pTheLightMesh->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
-		::g_pTheLightMesh->colour = glm::vec4( 142.0f/255.0f, 
-								   205.0f/255.0f,
-									49.0f/255.0f,
-									 1.0f );		// Transparency 'alpha'
+		::g_pTheLightMesh->colour = glm::vec4(244.0f / 255.0f, 51.0f / 255.0f, 255.0f / 255.0f, 1.0f);
 		::g_pTheLightMesh->scale = 0.1f;
 		::g_pTheLightMesh->isWireframe = false;
+		::g_pTheLightMesh->isAffectedByLight = false;
+		::g_pTheLightMesh->isUniformColour = true;
+
+		::g_vec_pMeshObjects.push_back( ::g_pTheLightMesh );
+	}	
+	{// Add an object into the "scene"
+		::g_pTheLightMesh = new cMeshObject(); 
+
+		::g_pTheLightMesh->meshName = "isosphere_xyz.ply";
+
+		::g_pTheLightMesh->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
+		::g_pTheLightMesh->colour = glm::vec4(128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0f, 1.0f);		// Transparency 'alpha'
+		::g_pTheLightMesh->scale = 0.1f;
+		::g_pTheLightMesh->isWireframe = false;
+		::g_pTheLightMesh->isAffectedByLight = false;
+		::g_pTheLightMesh->isUniformColour = true;
+
+		::g_vec_pMeshObjects.push_back( ::g_pTheLightMesh );
+	}	
+	{// Add an object into the "scene"
+		::g_pTheLightMesh = new cMeshObject(); 
+
+		::g_pTheLightMesh->meshName = "isosphere_xyz.ply";
+
+		::g_pTheLightMesh->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
+		::g_pTheLightMesh->colour = glm::vec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 1.0f);		// Transparency 'alpha'
+
+		::g_pTheLightMesh->scale = 0.1f;
+		::g_pTheLightMesh->isWireframe = false;
+		::g_pTheLightMesh->isAffectedByLight = false;
+		::g_pTheLightMesh->isUniformColour = true;
 
 		::g_vec_pMeshObjects.push_back( ::g_pTheLightMesh );
 	}	
@@ -815,12 +1051,10 @@ void LoadObjectsIntoScene(void)
 		pTemp->meshName = "CrappyTerrain.ply";
 
 		pTemp->pos = glm::vec3( 0.0f, -10.0f, 0.0f );
-		pTemp->colour = glm::vec4( 142.0f/255.0f, 
-								   205.0f/255.0f,
-									49.0f/255.0f,
-									 1.0f );		// Transparency 'alpha'
+		pTemp->colour = glm::vec4( 142.0f/255.0f, 205.0f/255.0f, 49.0f/255.0f, 1.0f );		// Transparency 'alpha'
 		pTemp->scale = 1.0f;
 		pTemp->isWireframe = false;
+		pTemp->isUniformColour = true;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
 	}	
@@ -828,15 +1062,17 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "cow_xyz.ply";
+		pTemp->meshName = "s21.ply";
 
-		pTemp->pos = glm::vec3( 1.0f, 0.0f, 0.0f );
+		pTemp->pos = glm::vec3( 1.0f, 0.2f, 0.0f );
 		pTemp->colour = glm::vec4( 243.0f/255.0f,		
 								     9.0f/255.0f,
 								    25.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
-		pTemp->scale = 0.05f;
+		pTemp->scale = 2.0f;
 		pTemp->isWireframe = false;
+		pTemp->isUniformColour = true;
+
 
 		::g_vec_pMeshObjects.push_back( pTemp );
 	}
@@ -844,15 +1080,18 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "cow_xyz.ply";
+		pTemp->meshName = "s21.ply";
 
+		pTemp->orientation = glm::vec3(0.0f, 0.2f, 0.0f);
 		pTemp->pos = glm::vec3( 2.0f, 1.0f, 0.0f );
 		pTemp->colour = glm::vec4( 142.0f/255.0f,	
 								   205.0f/255.0f,
 								   248.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
-		pTemp->scale = 0.1f;
+		pTemp->scale = 2.0f;
 		pTemp->isWireframe = true;
+		pTemp->isUniformColour = true;
+
 
 		::g_vec_pMeshObjects.push_back( pTemp );
 	}
@@ -860,15 +1099,14 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "bun_zipper_res2_xyz.ply";
+		pTemp->meshName = "mig29.ply";
 
 		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
-		pTemp->colour = glm::vec4( 1.0f,
-								   1.0f, 
-									1.0f,
-									 1.0f );		// Transparency 'alpha'
+		pTemp->colour = glm::vec4( 1.0f, 1.0f, 1.0f, 1.0f );		// Transparency 'alpha'
 		pTemp->scale = 2.0f;
 		pTemp->isWireframe = false;
+		pTemp->isUniformColour = true;
+
 
 		::g_vec_pMeshObjects.push_back( pTemp );
 	}
@@ -876,7 +1114,7 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "ssj100_xyz.ply";
+		pTemp->meshName = "ssj100.ply";
 
 		// 2 * PI   
 		// 1 PI = 180
@@ -887,13 +1125,16 @@ void LoadObjectsIntoScene(void)
 //		pTemp->orientation.x = 3.14159f * 0.25f;		// YOLO, right? 
 		pTemp->orientation.y = glm::pi<float>() * 0.5f;		// YOLO, right? 
 
-		pTemp->pos = glm::vec3( -1.0f, 0.0f, 0.0f );
+		pTemp->orientation = glm::vec3(0.0f,6.2f, 0.0f);
+		pTemp->pos = glm::vec3( -1.1f, 0.3f, 0.0f );
 		pTemp->colour = glm::vec4( 142.0f/255.0f, 
 									49.0f/255.0f,
 								   205.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
 		pTemp->scale = 1.5f;
 		pTemp->isWireframe = false;
+		pTemp->isUniformColour = true;
+
 
 		::g_vec_pMeshObjects.push_back( pTemp );
 	}
@@ -901,9 +1142,9 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "free_arena_ASCII_xyz.ply";
-
-		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
+		pTemp->meshName = "SpaceShuttleOrbiter.ply";
+		pTemp->orientation = glm::vec3(-1.5f, 2.8f, 0.0f);
+		pTemp->pos = glm::vec3( -2.0f, 1.0f, 0.0f );
 		pTemp->colour = glm::vec4( 244.0f/255.0f,  
 									223.0f/255.0f,
 								    33.0f/255.0f,
@@ -911,56 +1152,126 @@ void LoadObjectsIntoScene(void)
 		// Largest "extent" in this model
 		// is 40.2828 
 		
-		pTemp->scale = 1.0f/40.2828f;
+		pTemp->scale = 0.001f;
 
 		// Now my model 1.0 unit in size (-1 to 1)
 
 		pTemp->isWireframe = false;
+		pTemp->isUniformColour = true;
+
 
 		::g_vec_pMeshObjects.push_back( pTemp );
 	}
 
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject();
+
+		pTemp->meshName = "s21.ply";
+
+		pTemp->pos = glm::vec3(1.0f, 0.2f, 2.5f);
+		pTemp->colour = glm::vec4(243.0f / 255.0f,
+			9.0f / 255.0f,
+			25.0f / 255.0f,
+			1.0f);		// Transparency 'alpha'
+		pTemp->scale = 2.0f;
+		pTemp->isWireframe = false;
+		pTemp->isUniformColour = true;
 
 
-	// std::vector< cMeshObject* > ;
+		::g_vec_pMeshObjects.push_back(pTemp);
+	}
 
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject();
+
+		pTemp->meshName = "s21.ply";
+
+		pTemp->orientation = glm::vec3(0.0f, 0.2f, 0.0f);
+		pTemp->pos = glm::vec3(2.0f, 1.0f, 2.5f);
+		pTemp->colour = glm::vec4(142.0f / 255.0f,
+			205.0f / 255.0f,
+			248.0f / 255.0f,
+			1.0f);		// Transparency 'alpha'
+		pTemp->scale = 2.0f;
+		pTemp->isWireframe = true;
+		pTemp->isUniformColour = true;
+
+
+		::g_vec_pMeshObjects.push_back(pTemp);
+	}
+
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject();
+
+		pTemp->meshName = "mig29.ply";
+
+		pTemp->pos = glm::vec3(0.0f, 0.0f,2.5f);
+		pTemp->colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);		// Transparency 'alpha'
+		pTemp->scale = 2.0f;
+		pTemp->isWireframe = false;
+		pTemp->isUniformColour = true;
+
+
+		::g_vec_pMeshObjects.push_back(pTemp);
+	}
+
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject();
+
+		pTemp->meshName = "ssj100.ply";
+
+		// 2 * PI   
+		// 1 PI = 180
+		// 0.5 = 90 
+		// 0.25 = 45
+
+
+		//		pTemp->orientation.x = 3.14159f * 0.25f;		// YOLO, right? 
+		pTemp->orientation.y = glm::pi<float>() * 0.5f;		// YOLO, right? 
+
+		pTemp->orientation = glm::vec3(0.0f, 6.2f, 0.0f);
+		pTemp->pos = glm::vec3(-1.1f, 0.3f, 2.5f);
+		pTemp->colour = glm::vec4(142.0f / 255.0f,
+			49.0f / 255.0f,
+			205.0f / 255.0f,
+			1.0f);		// Transparency 'alpha'
+		pTemp->scale = 1.5f;
+		pTemp->isWireframe = false;
+		pTemp->isUniformColour = true;
+
+
+		::g_vec_pMeshObjects.push_back(pTemp);
+	}
+
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject();
+
+		pTemp->meshName = "SpaceShuttleOrbiter.ply";
+		pTemp->orientation = glm::vec3(-1.5f, 2.8f, 0.0f);
+		pTemp->pos = glm::vec3(-2.0f, 1.0f, 2.5f);
+		pTemp->colour = glm::vec4(244.0f / 255.0f,
+			223.0f / 255.0f,
+			33.0f / 255.0f,
+			1.0f);		// Transparency 'alpha'
+						// Largest "extent" in this model
+						// is 40.2828 
+
+		pTemp->scale = 0.001f;
+
+		// Now my model 1.0 unit in size (-1 to 1)
+
+		pTemp->isWireframe = false;
+		pTemp->isUniformColour = true;
+
+
+		::g_vec_pMeshObjects.push_back(pTemp);
+	}
 	return;
 }
 
 void ShutErDown(void)
 {
-	// 
 	delete ::g_pTheShaderManager;
 
 	return;
 }
-
-
-	////
-	//	for ( std::vector< cMeshObject* >::iterator itMesh;
-	//		  itMesh != ::g_vec_pMeshObjects.end();
-	//		  itMesh++ )
-	//	{
-	//		cMeshObject* pCurMesh = *itMesh;
-
-
-
-
-
-// Old sexy shaders
-//static const char* vertex_shader_text =
-//"uniform mat4 MVP;\n"
-//"attribute vec3 vCol;\n"		// float r, g, b;
-//"attribute vec3 vPos;\n"		// float x, y, z;
-//"varying vec3 color;\n"
-//"void main()\n"
-//"{\n"
-//"   vec3 newVertex = vPos;				\n"
-//"\n"
-//"   newVertex.x = newVertex.x / 100000.0f; \n"
-//"	newVertex.y = newVertex.y / 100000.0f; \n"
-//"	newVertex.z = newVertex.z / 100000.0f; \n"
-//"\n"
-//"    gl_Position = MVP * vec4(newVertex, 1.0);\n"
-//"    color = vCol;\n"
-//"}\n";
