@@ -12,8 +12,16 @@
 // So dictated from THE SHADER
 struct sVert
 {
-	float x, y, z;		// added "z"
-	float r, g, b;
+	float x, y, z, w;			// vPosition
+	float red, green, blue, alpha;		// vColourRGBA
+	float nx, ny, nz, n_discard;		// vNormal
+	float u1, v1, u2, v2;	// vTexUV
+	sVert() : 
+		x(0.0f), y(0.0f), z(0.0f), w(0.0f), 
+		red(0.0f), green(0.0f), blue(0.0f), alpha(0.0f),
+		nx(0.0f), ny(0.0f), nz(0.0f), n_discard(0.0f),
+		u1(0.f), v1(0.0f), u2(0.0f), v2(0.0f) 
+	{};
 };
 
 
@@ -38,6 +46,14 @@ struct sModelDrawInfo
 	sVert* pVertices;	//  = 0;
 	// The index buffer (CPU side)
 	unsigned int* pIndices;
+
+	// You could store the max and min values of the 
+	//  vertices here (determined when you load them):
+	float maxX, maxY, maxZ;
+	float minX, minY, minZ;
+	float extentX, extentY, extentZ;
+	float maxExtent;
+
 };
 
 
@@ -54,6 +70,8 @@ public:
 								 sModelDrawInfo &drawInfo);
 
 	std::string getLastError(bool bAndClear = true);
+
+	void ShutDown(void);
 
 private:
 

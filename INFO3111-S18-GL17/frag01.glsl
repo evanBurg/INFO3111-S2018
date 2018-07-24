@@ -1,15 +1,27 @@
 #version 420
-// If 420 doesn't work, try 330 
-// After 3.x, it is the version, so 4.20
-// Also, the version of GLSL WASN'T 
-// the same as the OpenGL version.
-
 // FRAGMENT SHADER
 
-in vec3 color;				// was varying
-in vec3 vertInWorld;		// was varying
-in mat4 mat4WorldRotOnly;	// To be used on Tuesday
+// From the vertex shader:
+in vec4 vertColourRGBA;
+in vec4 vertWorldPosXYZ;
+in vec4 vertNormal;
+in vec4 vertTexUV;	
 
+bool bDoTheSexyThing;
+
+const int NUMLIGHTS = 1;
+
+struct sLight
+{
+	vec3 Position;
+	vec4 Direction;
+	vec4 Diffuse;
+	vec4 Ambient;
+	vec4 Specular; 		// rgb = colour, w = intensity
+	// x = constant, y = linear, z = quadratic, w = “type”
+	vec4 AttenAndType;	// 0 = point, 1 = spot, 2 = directional 
+};
+uniform sLight theLights[NUMLIGHTS];
 
 // LIGHT 1
 uniform vec3 lightPosition1;
@@ -20,6 +32,8 @@ uniform vec4 lightSpecular1;
 uniform vec4 lightAttenAndType1;		
 uniform vec3 lightColour1;
 //
+
+out vec4 outputColour;
 
 // LIGHT 2
 uniform vec3 lightPosition2;
@@ -46,35 +60,65 @@ void main()
 {
 	// Take the colour of the thing, and set the output 
 	//	colour to that to start... 
-	vec3 outDiffuse = vec3(0.0f, 0.0f, 0.0f); 
-	if(AffectedByLight){
+
+	// vec3 outDiffuse = vec3(0.0f, 0.0f, 0.0f); 
+	// if(AffectedByLight){
+		// // Calculate the distance between the light 
+		// // and the vertex that this fragment is using
+		// float lightDistance1 = abs(distance( vertInWorld, lightPosition1));
+		// float lightDistance2 = abs(distance( vertInWorld, lightPosition2));
+		// float lightDistance3 = abs(distance( vertInWorld, lightPosition3));
+
+		// float attenuation1 = 1.0f / ( lightAttenAndType1.x + lightAttenAndType1.y * lightDistance1	+ lightAttenAndType1.z * lightDistance1 * lightDistance1 );
+		// float attenuation2 = 1.0f / ( lightAttenAndType2.x + lightAttenAndType2.y * lightDistance2	+ lightAttenAndType2.z * lightDistance2 * lightDistance2 );
+		// float attenuation3 = 1.0f / ( lightAttenAndType3.x + lightAttenAndType3.y * lightDistance3	+ lightAttenAndType3.z * lightDistance3 * lightDistance3 );
+		
+		// /* vec3 lightReachingObject1 = lightColour1 * attenuation1;
+		// vec3 lightReachingObject2 = lightColour2 * attenuation2;
+		// vec3 lightReachingObject3 = lightColour3 * attenuation3;
+		
+		// outDiffuse.rgb += (color * lightReachingObject1);
+		// outDiffuse.rgb += (color * lightReachingObject2);
+		// outDiffuse.rgb += (color * lightReachingObject3); */
+		
+		// outDiffuse += (lightColour1 - color) * attenuation1;
+		// outDiffuse += (lightColour2 - color) * attenuation2;
+		// outDiffuse += (lightColour3 - color) * attenuation3;
+		
+	// }else{
+		// outDiffuse = color;
+	// }
+
+    // gl_FragColor = vec4(outDiffuse, 1.0);*
+	
+	//vec3 outDiffuse = color; 
+	vec4 outDiffuse = vec4(0.0f, 0.0f, 0.0f, 1.0f);	// Start with black 
+	
+	for ( int index = 0; index != NUMLIGHTS; index++ )
+	{
 		// Calculate the distance between the light 
 		// and the vertex that this fragment is using
-		float lightDistance1 = abs(distance( vertInWorld, lightPosition1));
-		float lightDistance2 = abs(distance( vertInWorld, lightPosition2));
-		float lightDistance3 = abs(distance( vertInWorld, lightPosition3));
+		float lightDistance = distance( vertWorldPosXYZ.xyz, theLights[index].Position );
+		lightDistance = abs(lightDistance);
 
-		float attenuation1 = 1.0f / ( lightAttenAndType1.x + lightAttenAndType1.y * lightDistance1	+ lightAttenAndType1.z * lightDistance1 * lightDistance1 );
-		float attenuation2 = 1.0f / ( lightAttenAndType2.x + lightAttenAndType2.y * lightDistance2	+ lightAttenAndType2.z * lightDistance2 * lightDistance2 );
-		float attenuation3 = 1.0f / ( lightAttenAndType3.x + lightAttenAndType3.y * lightDistance3	+ lightAttenAndType3.z * lightDistance3 * lightDistance3 );
+		float attenuation = 1.0f / 
+			( theLights[index].AttenAndType.x 						// 0  
+			+ theLights[index].AttenAndType.y * lightDistance					// Linear
+			+ theLights[index].AttenAndType.z * lightDistance * lightDistance );	// Quad
+
+// Optional clamp of attenuation, so the light won't get 'too' dark			
+//		attenuation = clamp( attenuation, 0.0f, 1000.0f );
+
+		vec3 lightContrib = theLights[index].Diffuse.rgb;
 		
-		/* vec3 lightReachingObject1 = lightColour1 * attenuation1;
-		vec3 lightReachingObject2 = lightColour2 * attenuation2;
-		vec3 lightReachingObject3 = lightColour3 * attenuation3;
+		lightContrib *= attenuation;
 		
-		outDiffuse.rgb += (color * lightReachingObject1);
-		outDiffuse.rgb += (color * lightReachingObject2);
-		outDiffuse.rgb += (color * lightReachingObject3); */
-		
-		outDiffuse += (lightColour1 - color) * attenuation1;
-		outDiffuse += (lightColour2 - color) * attenuation2;
-		outDiffuse += (lightColour3 - color) * attenuation3;
-		
-	}else{
-		outDiffuse = color;
+		outDiffuse.rgb += (vertColourRGBA.rgb * lightContrib);
 	}
-
-    gl_FragColor = vec4(outDiffuse, 1.0);
+	
+	outDiffuse.rgb = clamp( outDiffuse.rgb, vec3(0.0f,0.0f,0.0f), vec3(1.0f,1.0f,1.0f) );
+	
+	outputColour = vec4(outDiffuse.rgb, 1.0f);
 };
 
 

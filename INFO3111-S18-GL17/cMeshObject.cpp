@@ -10,6 +10,8 @@ cMeshObject::cMeshObject()
 	this->isUniformColour = false;
 	this->isAffectedByLight = true;
 
+	this->m_AssignUniqueID();
+
 	return;
 }
 
@@ -25,5 +27,20 @@ cMeshObject::cMeshObject(std::string meshName, glm::vec3 pos, glm::vec4 colour, 
 cMeshObject::~cMeshObject()
 {
 
+	return;
+}
+
+//static 
+unsigned int cMeshObject::m_nextID = 1000;
+
+	//mutable unsigned int uniqueID;
+
+void cMeshObject::m_AssignUniqueID(void) 
+{
+	unsigned int* pUniqeID = const_cast<unsigned int*>(&this->uniqueID);
+
+	(*pUniqeID) = cMeshObject::m_nextID;
+
+	cMeshObject::m_nextID++;
 	return;
 }
