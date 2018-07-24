@@ -158,15 +158,18 @@
   <ItemGroup>
     <ClCompile Include="cLightHelper.cpp" />
     <ClCompile Include="cMeshObject.cpp" />
+    <ClCompile Include="commonEngineStuff.cpp" />
     <ClCompile Include="cShader.cpp" />
     <ClCompile Include="cShaderManager.cpp" />
     <ClCompile Include="cVAOManager.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="ObjectLoadingStuff.cpp" />
     <ClCompile Include="TheMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cLightHelper.h" />
     <ClInclude Include="cMeshObject.h" />
+    <ClInclude Include="commonEngineStuff.h" />
     <ClInclude Include="cShaderManager.h" />
     <ClInclude Include="cVAOManager.h" />
     <ClInclude Include="globalOpenGLStuff.h" />

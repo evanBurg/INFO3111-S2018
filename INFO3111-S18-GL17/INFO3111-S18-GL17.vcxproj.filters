@@ -8,6 +8,8 @@
     <ClCompile Include="TheMain.cpp" />
     <ClCompile Include="cVAOManager.cpp" />
     <ClCompile Include="cLightHelper.cpp" />
+    <ClCompile Include="ObjectLoadingStuff.cpp" />
+    <ClCompile Include="commonEngineStuff.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cMeshObject.h" />
@@ -16,6 +18,7 @@
     <ClInclude Include="linmath.h" />
     <ClInclude Include="cVAOManager.h" />
     <ClInclude Include="cLightHelper.h" />
+    <ClInclude Include="commonEngineStuff.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Shaders">
