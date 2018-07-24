@@ -168,11 +168,8 @@ int main(void)
 	GLint bUse_vColourRGBA_AlphaValue_UniLoc = glGetUniformLocation(shadProgID, "bUse_vColourRGBA_AlphaValue");
 	GLint bUseVertexColour_UniLoc = glGetUniformLocation(shadProgID, "bUseVertexColour");
 
-<<<<<<< HEAD
-=======
 	GLint bDontLightObject_UniLoc = glGetUniformLocation(shadProgID, "bDontLightObject" );
-	
->>>>>>> 12669797d6ec7cd39471bac39f29ee06f6fadd70
+
 	// Shader uniform variables
 
 	// The light values...
@@ -537,15 +534,10 @@ void LoadObjectsIntoScene(void)
 		::g_pTheLightMesh->scale = 0.1f;
 		::g_pTheLightMesh->isWireframe = false;
 
-<<<<<<< HEAD
-		::g_vec_pMeshObjects.push_back(::g_pTheLightMesh);
-	}
-=======
 		::g_pTheLightMesh->bDontLightObject = true;
 
 		::g_vec_pMeshObjects.push_back( ::g_pTheLightMesh );
 	}	
->>>>>>> 12669797d6ec7cd39471bac39f29ee06f6fadd70
 
 
 	{// Add an object into the "scene"
@@ -592,7 +584,7 @@ void LoadObjectsIntoScene(void)
 			248.0f / 255.0f,
 			1.0f);		// Transparency 'alpha'
 		pTemp->scale = 0.1f;
-		pTemp->isWireframe = true;
+		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back(pTemp);
 	}

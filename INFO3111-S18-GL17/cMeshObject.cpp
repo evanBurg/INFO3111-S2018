@@ -7,8 +7,6 @@ cMeshObject::cMeshObject()
     this->scale = 1.0f;
     this->isWireframe = false;
 	this->orientation = glm::vec3(0.0f,0.0f,0.0f);
-	this->isUniformColour = false;
-	this->isAffectedByLight = true;
 
 	this->m_AssignUniqueID();
 
