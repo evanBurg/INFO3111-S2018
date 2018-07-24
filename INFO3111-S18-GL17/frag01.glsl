@@ -52,7 +52,7 @@ void main()
 		lightVector = normalize(lightVector);
 		
 		// Get the dot product of the light and normalize
-		float dotProduct = dot( lightVector, vertNormal.xyz );	// -1 to 1
+		float dotProduct = dot( lightVector, normalize(vertNormal.xyz) );	// -1 to 1
 		
 		dotProduct = max( 0.0f, dotProduct );		// 0 to 1
 		
