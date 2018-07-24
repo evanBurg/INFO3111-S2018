@@ -9,7 +9,7 @@ in vec4 vertTexUV;
 
 bool bDoTheSexyThing;
 
-const int NUMLIGHTS = 1;
+const int NUMLIGHTS = 3;
 
 struct sLight
 {
