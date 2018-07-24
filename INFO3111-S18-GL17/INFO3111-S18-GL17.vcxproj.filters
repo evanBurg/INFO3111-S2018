@@ -7,6 +7,7 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="TheMain.cpp" />
     <ClCompile Include="cVAOManager.cpp" />
+    <ClCompile Include="cLightHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cMeshObject.h" />
@@ -14,6 +15,7 @@
     <ClInclude Include="globalOpenGLStuff.h" />
     <ClInclude Include="linmath.h" />
     <ClInclude Include="cVAOManager.h" />
+    <ClInclude Include="cLightHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Shaders">
