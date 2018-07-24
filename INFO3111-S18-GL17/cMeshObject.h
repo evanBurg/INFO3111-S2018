@@ -17,6 +17,12 @@ public:
 	glm::vec3 orientation;	// 
     float scale;			// 1.0f
     bool isWireframe;		// false
+
+	const unsigned int uniqueID = 0;
+
+private:
+	void m_AssignUniqueID(void);
+	static unsigned int m_nextID;	// = 1000
 };
 
 #endif // _cMeshObject_HG_

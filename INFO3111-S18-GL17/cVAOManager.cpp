@@ -4,6 +4,7 @@
 
 #include <fstream>
 
+#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
@@ -28,13 +29,6 @@ sModelDrawInfo::sModelDrawInfo()
 	this->pVertices = 0;	// or NULL
 	this->pIndices = 0;		// or NULL
 
-	// You could store the max and min values of the 
-	//  vertices here (determined when you load them):
-	glm::vec3 maxValues;
-	glm::vec3 minValues;
-
-//	scale = 5.0/maxExtent;		-> 5x5x5
-	float maxExtent;
 
 	return;
 }
@@ -103,21 +97,35 @@ bool cVAOManager::LoadModelIntoVAO(
 
 	// Set the vertex attributes.
 
-	GLint vpos_location = glGetAttribLocation(shaderProgramID, "vPos");	// program
-	GLint vcol_location = glGetAttribLocation(shaderProgramID, "vCol");	// program;
+	GLint vPosition_location = glGetAttribLocation(shaderProgramID, "vPosition");	// program
+	GLint vColourRGBA_location = glGetAttribLocation(shaderProgramID, "vColourRGBA");	// program;
+	GLint vNormal_location = glGetAttribLocation(shaderProgramID, "vNormal");	// program
+	GLint vTexUV_location = glGetAttribLocation(shaderProgramID, "vTexUV");	// program;
 
 	// Set the vertex attributes for this shader
-	glEnableVertexAttribArray(vpos_location);	// vPos
-	glVertexAttribPointer( vpos_location, 3,		// vPos
+	glEnableVertexAttribArray(vPosition_location);		// vPosition
+	glVertexAttribPointer( vPosition_location, 4,		// vPosition
 						   GL_FLOAT, GL_FALSE,
-						   sizeof(float) * 6, 
-						   ( void* )0);
+						   sizeof(sVert),	// sizeof(float) * 6, 
+						   ( void* ) offsetof(sVert, x) );
 
-	glEnableVertexAttribArray(vcol_location);	// vCol
-	glVertexAttribPointer( vcol_location, 3,		// vCol
+	glEnableVertexAttribArray(vColourRGBA_location);	// vColourRGBA
+	glVertexAttribPointer( vColourRGBA_location, 4,		// vColourRGBA
 						   GL_FLOAT, GL_FALSE,
-						   sizeof(float) * 6, 
-						   ( void* )( sizeof(float) * 3 ));
+						   sizeof(sVert),	// sizeof(float) * 6, 
+						   ( void* ) offsetof(sVert, red) );
+
+	glEnableVertexAttribArray(vNormal_location);		// vNormal
+	glVertexAttribPointer( vNormal_location, 4,		// vNormal
+						   GL_FLOAT, GL_FALSE,
+						   sizeof(sVert),	// sizeof(sVert),	// sizeof(float) * 6, 
+						   ( void* ) offsetof(sVert, nx) );
+
+	glEnableVertexAttribArray(vTexUV_location);		// vTexUV
+	glVertexAttribPointer( vTexUV_location, 4,		// vTexUV
+						   GL_FLOAT, GL_FALSE,
+						   sizeof(sVert),	// sizeof(sVert),	// sizeof(float) * 6, 
+						   ( void* ) offsetof(sVert, u1) );
 
 	// Now that all the parts are set up, set the VAO to zero
 	glBindVertexArray(0);
@@ -125,8 +133,10 @@ bool cVAOManager::LoadModelIntoVAO(
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	glDisableVertexAttribArray(vpos_location);
-	glDisableVertexAttribArray(vcol_location);
+	glDisableVertexAttribArray(vPosition_location);
+	glDisableVertexAttribArray(vColourRGBA_location);
+	glDisableVertexAttribArray(vNormal_location);
+	glDisableVertexAttribArray(vTexUV_location);
 
 
 	// Store the draw information into the map
@@ -215,6 +225,9 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 	{
 		glm::vec3 pos;
 		glm::vec4 colour;
+		// Added
+		glm::vec3 normal;
+		glm::vec2 texUV;
 	};
 
 	std::vector<sVertPly> vecTempPlyVerts;
@@ -226,23 +239,50 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 	{
 		thePlyFile >> tempVert.pos.x >> tempVert.pos.y >> tempVert.pos.z;
 		
-
-//		tempVert.pos.x *= 10.0f;
-//		tempVert.pos.y *= 10.0f;
-//		tempVert.pos.z *= 10.0f;
-
+		thePlyFile >> tempVert.normal.x >> tempVert.normal.y >> tempVert.normal.z;
 
 		thePlyFile >> tempVert.colour.x >> tempVert.colour.y
 			       >> tempVert.colour.z >> tempVert.colour.w; 
+
+		thePlyFile >> tempVert.texUV.x >> tempVert.texUV.y;
 
 		// Scale the colour from 0 to 1, instead of 0 to 255
 		tempVert.colour.x /= 255.0f;
 		tempVert.colour.y /= 255.0f;
 		tempVert.colour.z /= 255.0f;
+		tempVert.colour.a /= 255.0f;
 
 		// Add too... what? 
 		vecTempPlyVerts.push_back(tempVert);
 	}
+
+	// Calculate the extents of the model
+	// Assume the 1st one is both the min and max
+	drawInfo.minX = drawInfo.maxX = vecTempPlyVerts[0].pos.x;
+	drawInfo.minY = drawInfo.maxY = vecTempPlyVerts[0].pos.y;
+	drawInfo.minZ = drawInfo.maxZ = vecTempPlyVerts[0].pos.z;
+
+	for ( std::vector<sVertPly>::iterator itVert = vecTempPlyVerts.begin(); 
+		  itVert != vecTempPlyVerts.end(); itVert++ )
+	{
+		if ( itVert->pos.x > drawInfo.maxX )	{ drawInfo.maxX = itVert->pos.x; }
+		if ( itVert->pos.y > drawInfo.maxY )	{ drawInfo.maxY = itVert->pos.y; }
+		if ( itVert->pos.z > drawInfo.maxZ )	{ drawInfo.maxZ = itVert->pos.z; }
+
+		if ( itVert->pos.x < drawInfo.minX )	{ drawInfo.minX = itVert->pos.x; }
+		if ( itVert->pos.y < drawInfo.minY )	{ drawInfo.minY = itVert->pos.y; }
+		if ( itVert->pos.z < drawInfo.minZ )	{ drawInfo.minZ = itVert->pos.z; }
+	}//for ( std::vector<sVertPly>::iterator itVert...
+
+	drawInfo.extentX = drawInfo.maxX - drawInfo.minX;
+	drawInfo.extentY = drawInfo.maxY - drawInfo.minY;
+	drawInfo.extentZ = drawInfo.maxZ - drawInfo.minZ;
+
+	// calculate the maximum extent
+	drawInfo.maxExtent = drawInfo.extentX;
+	if ( drawInfo.extentY > drawInfo.maxExtent )	{ drawInfo.maxExtent = drawInfo.extentY; }
+	if ( drawInfo.extentZ > drawInfo.maxExtent )	{ drawInfo.maxExtent = drawInfo.extentZ; }
+
 
 	// Create a local vertex array
 	// Note: The format the file (ply) is DIFFERENT from this array:
@@ -260,9 +300,21 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 		drawInfo.pVertices[index].y = vecTempPlyVerts[index].pos.y;
 		drawInfo.pVertices[index].z = vecTempPlyVerts[index].pos.z;
 
-		drawInfo.pVertices[index].r = vecTempPlyVerts[index].colour.r;
-		drawInfo.pVertices[index].g = vecTempPlyVerts[index].colour.g;
-		drawInfo.pVertices[index].b = vecTempPlyVerts[index].colour.b;
+		drawInfo.pVertices[index].red = vecTempPlyVerts[index].colour.r;
+		drawInfo.pVertices[index].green = vecTempPlyVerts[index].colour.g;
+		drawInfo.pVertices[index].blue = vecTempPlyVerts[index].colour.b;
+		drawInfo.pVertices[index].alpha = vecTempPlyVerts[index].colour.a;
+
+		drawInfo.pVertices[index].nx = vecTempPlyVerts[index].normal.x;
+		drawInfo.pVertices[index].ny = vecTempPlyVerts[index].normal.y;
+		drawInfo.pVertices[index].nz = vecTempPlyVerts[index].normal.z;
+		drawInfo.pVertices[index].n_discard = 1.0f;
+
+		drawInfo.pVertices[index].u1 = vecTempPlyVerts[index].texUV.x;
+		drawInfo.pVertices[index].v1 = vecTempPlyVerts[index].texUV.y;
+		drawInfo.pVertices[index].u2 = vecTempPlyVerts[index].texUV.x;
+		drawInfo.pVertices[index].v2 = vecTempPlyVerts[index].texUV.y;
+
 	}// for ( unsigned int index...
 
 
@@ -326,27 +378,6 @@ bool cVAOManager::m_LoadTheModel(std::string fileName,
 		drawInfo.pIndices[indexBufferIndex + 1] = curTri.vindex[1];
 		drawInfo.pIndices[indexBufferIndex + 2] = curTri.vindex[2];
 
-		//pVertices[ vertIndex + 0 ].x = curTri.verts[0].pos.x;
-		//pVertices[ vertIndex + 0 ].y = curTri.verts[0].pos.y;
-		//pVertices[ vertIndex + 0 ].z = curTri.verts[0].pos.z;
-		//pVertices[ vertIndex + 0 ].r = curTri.verts[0].colour.x;
-		//pVertices[ vertIndex + 0 ].g = curTri.verts[0].colour.y;
-		//pVertices[ vertIndex + 0 ].b = curTri.verts[0].colour.z;
-//
-		//pVertices[ vertIndex + 1 ].x = curTri.verts[1].pos.x;
-		//pVertices[ vertIndex + 1 ].y = curTri.verts[1].pos.y;
-		//pVertices[ vertIndex + 1 ].z = curTri.verts[1].pos.z;
-		//pVertices[ vertIndex + 1 ].r = curTri.verts[1].colour.x;
-		//pVertices[ vertIndex + 1 ].g = curTri.verts[1].colour.y;
-		//pVertices[ vertIndex + 1 ].b = curTri.verts[1].colour.z;
-//
-		//pVertices[ vertIndex + 2 ].x = curTri.verts[2].pos.x;
-		//pVertices[ vertIndex + 2 ].y = curTri.verts[2].pos.y;
-		//pVertices[ vertIndex + 2 ].z = curTri.verts[2].pos.z;
-		//pVertices[ vertIndex + 2 ].r = curTri.verts[2].colour.x;
-		//pVertices[ vertIndex + 2 ].g = curTri.verts[2].colour.y;
-		//pVertices[ vertIndex + 2 ].b = curTri.verts[2].colour.z;
-//
 	}// for ( unsigned int triIndex = 0...
 
 	return true;
@@ -381,4 +412,22 @@ void cVAOManager::m_AppendTextToLastError(std::string text, bool addNewLineBefor
 
 	return;
 
+}
+
+void cVAOManager::ShutDown(void)
+{
+
+	for ( std::map< std::string, sModelDrawInfo >::iterator itVAO = this->m_map_ModelName_to_VAOID.begin();
+		  itVAO != this->m_map_ModelName_to_VAOID.end(); itVAO++ )
+	{
+		delete [] itVAO->second.pVertices;
+		delete [] itVAO->second.pIndices;
+
+		glGenVertexArrays;
+		glDeleteVertexArrays( 1, &(itVAO->second.VAO_ID) );
+		glDeleteBuffers( 1, &(itVAO->second.VertexBufferID) );
+		glDeleteBuffers( 1, &(itVAO->second.IndexBufferID) );
+	}
+
+	return;
 }

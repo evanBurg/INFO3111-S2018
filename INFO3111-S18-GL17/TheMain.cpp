@@ -18,50 +18,21 @@
 #include <string>
 #include <fstream>		// for the ply model loader
 #include <vector>		// for the ply model loader
+#include <sstream>
 
 #include "cMeshObject.h"
 
 void ShutErDown(void);
 
+GLFWwindow* g_window = 0;
+
 cMeshObject* g_pTheLightMesh = 0;		// or NULL
-
-
-//static const struct
-//{
-//	float x, y;
-//	float r, g, b;
-//} vertices[3] =
-//{
-//	{ -0.6f, -0.4f,		0.5f, 0.1f, 0.2f },
-//	{ 0.6f, -0.4f,		0.f, 1.f, 0.f },
-//	{ 0.f,  0.6f,		0.f, 1.f, 0.f }
-//};
-
-//struct sVert
-//{
-//	float x, y, z;		// added "z"
-//	float r, g, b;
-//};
-
-//sVert vertices[3] = 
-//{
-//	{ -0.6f, -0.4f, 0.0f,		0.5f, 0.1f, 0.2f },
-//	{ 0.6f, -0.4f, 0.0f, 		0.f, 1.f, 0.f },
-//	{ 0.f,  0.6f, 0.0f,			0.f, 1.f, 0.f }
-//};
-// Here's our heap based vertex array:
-//sVert* pVertices = 0;						//  = new sVert[10000];
-//unsigned int g_NumberOfVertsToDraw = 0;		// To draw (on GPU)
 
 
 unsigned int g_NumberOfVertices = 0;		// From file
 unsigned int g_NumberOfTriangles = 0;		// From file
 
-
-//// Function signature for loading the ply model
-//// Will load model and place into pVertices array
-//// (overwriting whatever was there)
-//void LoadTheModel(std::string fileName);
+bool LoadModelTypes(GLint shaderID, std::string &errors);
 
 // A vector of POINTERS to mesh objects...
 std::vector< cMeshObject* > g_vec_pMeshObjects;
@@ -71,38 +42,44 @@ cShaderManager* g_pTheShaderManager = 0;	// NULL, 0, nullptr
 
 cVAOManager* g_pTheVAOManager = 0;
 
-//static const char* vertex_shader_text =
-//"uniform mat4 MVP;\n"
-//"uniform vec3 meshColour; \n"
-//"attribute vec3 vCol;\n"		// float r, g, b;
-//"attribute vec3 vPos;\n"		// float x, y, z;
-//"varying vec3 color;\n"
-//"void main()\n"
-//"{\n"
-//"    vec3 newVertex = vPos;				\n"
-//"    gl_Position = MVP * vec4(newVertex, 1.0);\n"
-//"    color = meshColour;\n"				// color = vCol;
-//"    color *= 0.01f;\n"
-//"    color += vCol;\n"
-//"}\n";
-
-//static const char* fragment_shader_text =
-//"varying vec3 color;\n"
-//"void main()\n"
-//"{\n"
-//"    gl_FragColor = vec4(color, 1.0);\n"
-//"}\n";
 
 // This will get more involved
 struct sLight
 {
+	sLight()
+	{
+		this->position = glm::vec3(0.0f, 0.0f, 0.0f);
+		this->diffuseColour = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		this->attenConst = 0.0f;
+		this->attenLinear = 0.1f;
+		this->attenQuad = 0.1f;
+		this->UniLoc_Position = -1;
+		this->UniLoc_Diffuse = -1;
+		this->UniLoc_AttenAndLight = -1;
+		return;
+	}
+
 	glm::vec3 position;
+	glm::vec4 diffuseColour;
 	float attenLinear;
 	float attenConst;
 	float attenQuad;
-};
 
-sLight g_L1;
+	GLint UniLoc_Position;
+	GLint UniLoc_Diffuse;
+	GLint UniLoc_AttenAndLight;
+
+	static const float MAX_ATTENUATION;// = 100.0f;
+};
+//static 
+const float sLight::MAX_ATTENUATION = 100.0f;
+
+
+const unsigned int NUMLIGHTS = 3;
+std::vector<sLight> g_vecLights;
+
+void SetUpTheLights(GLint shaderProgID);
+void CopyLightInfoToShader( unsigned int numberOfLightsToCopy );
 
 
 static void error_callback(int error, const char* description)
@@ -122,47 +99,24 @@ void ProcessInput( glm::vec3 &cameraEye,
 
 int main(void)
 {
-	GLFWwindow* window;
-	//GLuint vertex_buffer, vertex_shader, fragment_shader;
-	//GLuint program;
-	GLint mvp_location; 
-	//GLint vpos_location;
-	//GLint vcol_location;
-
-	GLint meshColour_UniLoc = -1; 
 
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-	window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-	if (!window)
+	::g_window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+	if (! ::g_window)
 	{
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
-	glfwSetKeyCallback(window, key_callback);
-	glfwMakeContextCurrent(window);
+	glfwSetKeyCallback(::g_window, key_callback);
+	glfwMakeContextCurrent(::g_window);
 	gladLoadGLLoader(( GLADloadproc )glfwGetProcAddress);
 	glfwSwapInterval(1);
 
-//	LoadTheModel("bun_zipper_res2_xyz.ply");
-//	LoadTheModel("ssj100_xyz.ply");
-//	LoadTheModel("building_xyz.ply");
 
-	// Load objects into scene...
-	LoadObjectsIntoScene();
-
-
-	//// NOTE: OpenGL error checks have been omitted for brevity
-	//glGenBuffers(1, &vertex_buffer);
-	//glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	//// sVert vertices[3]
-	//glBufferData( GL_ARRAY_BUFFER, 
-	//			  sizeof(sVert) * ::g_NumberOfVertsToDraw,	// sizeof(vertices), 
-	//			  pVertices,			//vertices, 
-	//			  GL_STATIC_DRAW);
 
 	// Shader manager thing
 	::g_pTheShaderManager = new cShaderManager();
@@ -191,121 +145,52 @@ int main(void)
 		std::cout << ::g_pTheShaderManager->getLastError() << std::endl;
 		return(-1);
 	}
+	else
+	{
+		std::cout << "The shader compiled OK." << std::endl;
+	}
 
-//	glUseProgram( 3 );
 	GLuint shadProgID
 		= ::g_pTheShaderManager->getIDFromFriendlyName("simpleshader");
 
+
+
 	::g_pTheShaderManager->useShaderProgram(shadProgID);
 
-	//vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	//glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-	//glCompileShader(vertex_shader);
-//
-	//fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	//glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-	//glCompileShader(fragment_shader);
-	//program = glCreateProgram();
-//
-	//glAttachShader(program, vertex_shader);
-	//glAttachShader(program, fragment_shader);
-	//glLinkProgram(program);
-//
-	// "uniform mat4 MVP;\n"
-	// "uniform vec3 meshColour; \n"
-	mvp_location = glGetUniformLocation(shadProgID, "MVP");		// program
+	//mvp_location = glGetUniformLocation(shadProgID, "MVP");		// program
 
-	//uniform mat4 matModel;
-	//uniform mat4 matView;
-	//uniform mat4 matProjection;
 	GLint matModel_UniLoc = glGetUniformLocation(shadProgID, "matModel");
 	GLint matView_Uniloc = glGetUniformLocation(shadProgID, "matView");
 	GLint matProj_Uniloc = glGetUniformLocation(shadProgID, "matProjection");
 
-	//vpos_location = glGetAttribLocation(shadProgID, "vPos");	// program
-	//vcol_location = glGetAttribLocation(shadProgID, "vCol");	// program
-
 	// If it returns -1, then it didn't find it.
-	meshColour_UniLoc = glGetUniformLocation(shadProgID, "meshColour");
+	GLint meshColourRGBA_UniLoc = glGetUniformLocation(shadProgID, "meshColourRGBA");
+	GLint bUse_vColourRGBA_AlphaValue_UniLoc = glGetUniformLocation(shadProgID, "bUse_vColourRGBA_AlphaValue");
+	GLint bUseVertexColour_UniLoc = glGetUniformLocation(shadProgID, "bUseVertexColour");
 	
 	// Shader uniform variables
 
 	// The light values...
-	//uniform vec3 lightPosition;
-	//uniform vec4 lightAttenAndType;	
-	GLint LightPos_UL		= glGetUniformLocation( shadProgID, "lightPosition" );
-	GLint LightAttenType_UL = glGetUniformLocation( shadProgID, "lightAttenAndType" );
+	SetUpTheLights(shadProgID);
 
-
-	::g_L1.position = glm::vec3( 5.0f, 3.0f, 0.0f );
-	::g_L1.attenConst = 0.0f;		// NO attenuation
-	::g_L1.attenLinear = 0.1f;		// NO attenuation
-	::g_L1.attenQuad = 0.0f;		// NO attenuation
-//struct sVert
-//{
-//	float x, y, z;		// added "z"
-//	float r, g, b;
-//};
-//
-	//glEnableVertexAttribArray(vpos_location);	// vPos
-	//glVertexAttribPointer(vpos_location, 3,		// vPos
-	//					   GL_FLOAT, GL_FALSE,
-	//					   sizeof(float) * 6, 
-	//					   ( void* )0);
-
-	//glEnableVertexAttribArray(vcol_location);	// vCol
-	//glVertexAttribPointer(vcol_location, 3,		// vCol
-	//					   GL_FLOAT, GL_FALSE,
-	//					   sizeof(float) * 6, 
-	//					   ( void* )( sizeof(float) * 3 ));
+	::g_vecLights[0].position = glm::vec3( 2.0f, 2.0f, 0.0f );
+	::g_vecLights[0].diffuseColour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	::g_vecLights[0].attenConst = 0.0f;
+	::g_vecLights[0].attenLinear = 0.324f;		// Why this number? It looked nice!
+	::g_vecLights[0].attenQuad = 0.0115f;		// Same with this number!
 
 
 	::g_pTheVAOManager = new cVAOManager();
 	
-//	"bun_zipper_res2_xyz.ply", "ssj100_xyz.ply", "building_xyz.ply"
-	sModelDrawInfo bunny;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "bun_zipper_res2_xyz.ply", bunny, shadProgID ) )
+	// Load objects into scene...
+	std::string errors;
+	if ( ! LoadModelTypes(shadProgID, errors) )
 	{
-		std::cout << "Error: Problem loading model into VAO" << std::endl;
-		// We'll keep going as we might be able to load other models?
-	}
-	sModelDrawInfo cow;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "cow_xyz.ply", cow, shadProgID ) )
-	{
-		std::cout << "Error: Problem loading model into VAO" << std::endl;
-		// We'll keep going as we might be able to load other models?
-	}	
-	sModelDrawInfo airplane;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "ssj100_xyz.ply", airplane, shadProgID ) )
-	{
-		std::cout << "Error: Problem loading model into VAO" << std::endl;
-		// We'll keep going as we might be able to load other models?
-	}
-	sModelDrawInfo arena;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "free_arena_ASCII_xyz.ply", arena, shadProgID ) )
-	{
-		std::cout << "Error: Problem loading model into VAO" << std::endl;
-		// We'll keep going as we might be able to load other models?
-	}
-	sModelDrawInfo terrain;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "CrappyTerrain.ply", terrain, shadProgID ) )
-	{
-		std::cout << "Error: Problem loading model into VAO" << std::endl;
-		// We'll keep going as we might be able to load other models?
-	}
-	sModelDrawInfo sphere;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "isosphere_xyz.ply", terrain, shadProgID ) )
-	{
-		std::cout << "Error: Problem loading model into VAO" << std::endl;
-		// We'll keep going as we might be able to load other models?
+		std::cout << "There were errors loading the model files..." << std::endl;
+		std::cout << errors << std::endl;
 	}
 
-	// If you want to draw lines that aren't filled, you 
-	//	can change the "polygon mode" to "LINE" 
-	// (Note: there IS a GL_LINES, with an "S", which ISN'T
-	//  what you want here...)
-	//
-//	glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+	LoadObjectsIntoScene();
 
 	// Print out the GL version
 	std::cout << glGetString( GL_VERSION ) << std::endl;
@@ -314,14 +199,13 @@ int main(void)
 	glm::vec3 cameraTarget = glm::vec3( 0.0f, 0.0f, 0.0f ); 
 	glm::vec3 upVector = glm::vec3( 0.0f, 0.1f, 0.0f );
 
-	float theAmazingScale = 1.0f;
 
 	glEnable( GL_DEPTH_TEST );
 
 	glEnable( GL_CULL_FACE );
 	glCullFace( GL_BACK );
 
-	while (!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(::g_window))
 	{
 		float ratio;
 		int width, height;
@@ -331,19 +215,14 @@ int main(void)
 		glm::mat4 matProjection;	// was "p"
 		glm::mat4 matView;			// was "view"
 
-		glm::mat4 mvp;
+//		glm::mat4 mvp;
 
-		glfwGetFramebufferSize(window, &width, &height);
+		glfwGetFramebufferSize(::g_window, &width, &height);
 		ratio = width / ( float )height;
 		glViewport(0, 0, width, height);
-//		glClear(GL_COLOR_BUFFER_BIT);
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		
-		// The matModel stuff WAS here. Moved below...
-
-		//mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-//		p = glm::ortho( -1.0f, 1.0f, -1.0f, 1.0f );
 
 		matProjection 
 	      = glm::perspective( 0.6f, 
@@ -354,45 +233,21 @@ int main(void)
 		matView = glm::mat4(1.0f);
 
 		// Deal with the keyboard, etc.
-		ProcessInput( cameraEye, cameraTarget, window );
+		ProcessInput( cameraEye, cameraTarget, ::g_window );
 
-		// In the centre (x & z) and 5 units above that.
-		glUniform3f( LightPos_UL, 0.0f, 5.0f, 0.0f );
 
-		//int state = glfwGetKey(window, GLFW_KEY_D);
-		//if (state == GLFW_PRESS)
-		//{
-		//	cameraEye.x += 0.01f;
-		//}
-		//state = glfwGetKey(window, GLFW_KEY_A);
-		//if (state == GLFW_PRESS)
-		//{
-		//	cameraEye.x -= 0.01f;
-		//}
 
-		//glm::vec3 cameraEye = glm::vec3( 0.0, 0.0, -2.0f ); 
-		//glm::vec3 cameraTarget = glm::vec3( 0.0f, 0.0f, 0.0f ); 
-		//glm::vec3 upVector = glm::vec3( 0.0f, 1.0f, 0.0f );
 
 		matView = glm::lookAt( cameraEye,		// position (3d space)
 							   cameraTarget,	// looking at
 							   upVector );		// Up vector
 
-//		glPolygonMode( GL_FRONT_AND_BACK, GL_POINT );
-
-		// Set the lighting for the entire scene...
-		// vec3 lightPosition: 
-		glUniform3f( LightPos_UL, ::g_L1.position.x, ::g_L1.position.y, ::g_L1.position.z );
-		// vec4 lightAttenAndType
-		glUniform4f( LightAttenType_UL, 
-					 ::g_L1.attenConst, 
-					 ::g_L1.attenLinear, 
-					 ::g_L1.attenQuad, 
-					 0.0f );		// Ignore the "type" for now.
 
 
-		// move that light mesh to where the light is at, yo
-		::g_pTheLightMesh->pos = ::g_L1.position;
+		//// move that light mesh to where the light is at, yo
+		::g_pTheLightMesh->pos = ::g_vecLights[0].position;
+
+		CopyLightInfoToShader(NUMLIGHTS);
 
 
 		unsigned int numberOfObjects = 
@@ -456,17 +311,17 @@ int main(void)
 			matModel = matModel * matScale;
 
 
-			//mat4x4_mul(mvp, p, m);
-			// mvp = p * view * m; 
-	// Now these are passed one by one
-	//		mvp = matProjection * matView * matModel; 
-
-
 			// Also set the colour...
-			glUniform3f( meshColour_UniLoc,			// 'meshColour' in shader
+			glUniform4f( meshColourRGBA_UniLoc,			// 'meshColour' in shader
 						 pCurMesh->colour.x, 
 						 pCurMesh->colour.y,
-						 pCurMesh->colour.z );
+						 pCurMesh->colour.z,
+			             pCurMesh->colour.a );
+
+			// 
+			glUniform1f( bUse_vColourRGBA_AlphaValue_UniLoc, GL_FALSE );
+			glUniform1f( bUseVertexColour_UniLoc, GL_TRUE );
+
 
 
 			// Is it wireframe? 
@@ -483,15 +338,7 @@ int main(void)
 				glEnable( GL_CULL_FACE );
 			}
 
-//			glUseProgram(shadProgID);
-//			::g_pTheShaderManager->useShaderProgram("simpleshader");
-//			::g_pTheShaderManager->useShaderProgram( shadProgID );
 
-	//		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, ( const GLfloat* )mvp);
-	//		glUniformMatrix4fv( mvp_location, 
-	//						    1, 
-	//						    GL_FALSE, 
-	//							glm::value_ptr(mvp));
 			glUniformMatrix4fv( matModel_UniLoc, 
 							    1, 
 							    GL_FALSE, 
@@ -533,165 +380,19 @@ int main(void)
 		}// for(...
 
 		// Present the "frame buffer" to the screen
-		glfwSwapBuffers(window);
+		glfwSwapBuffers(::g_window);
 		glfwPollEvents();
+
 
 	} // while (!glfwWindowShouldClose(window))
 
 
 	ShutErDown();
 
-	glfwDestroyWindow(window);
+	glfwDestroyWindow(::g_window);
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
 }
-
-//void LoadTheModel(std::string fileName)
-//{
-//	// Open the file. 
-//	// Read until we hit the word "vertex"
-//	// Read until we hit the word "face"
-//	// Read until we hit the word "end_header"
-//
-//	std::ifstream thePlyFile( fileName.c_str() );
-//	if ( ! thePlyFile.is_open() )
-//	{	// Something is wrong...
-//		return;
-//	}
-//
-//	std::string temp; 
-//	while ( thePlyFile >> temp )
-//	{
-//		if ( temp == "vertex" ) 
-//		{
-//			break;
-//		}
-//	}; 
-//	// read the number of vertices...
-//	thePlyFile >> ::g_NumberOfVertices;
-//
-//	while ( thePlyFile >> temp )
-//	{
-//		if ( temp == "face" ) 
-//		{
-//			break;
-//		}
-//	}; 
-//	// read the number of triangles...
-//	thePlyFile >> ::g_NumberOfTriangles;
-//
-//
-//	while ( thePlyFile >> temp )
-//	{
-//		if ( temp == "end_header" ) 
-//		{
-//			break;
-//		}
-//	}; 
-//
-//	// And now, we start reading vertices... Hazzah!
-//	
-//	// This is set up to match the ply (3d model) file. 
-//	// NOT the shader. 
-//	struct sVertPly
-//	{
-//		glm::vec3 pos;
-//		glm::vec4 colour;
-//	};
-//
-//	std::vector<sVertPly> vecTempPlyVerts;
-//
-//	sVertPly tempVert;
-//	// Load the vertices...
-//	for ( unsigned int index = 0; index != ::g_NumberOfVertices; index++ )
-//	{
-//		thePlyFile >> tempVert.pos.x >> tempVert.pos.y >> tempVert.pos.z;
-//		
-////		tempVert.pos.x *= 10.0f;
-////		tempVert.pos.y *= 10.0f;
-////		tempVert.pos.z *= 10.0f;
-//
-//
-//		thePlyFile >> tempVert.colour.x >> tempVert.colour.y
-//			       >> tempVert.colour.z >> tempVert.colour.w; 
-//
-//		// Scale the colour from 0 to 1, instead of 0 to 255
-//		tempVert.colour.x /= 255.0f;
-//		tempVert.colour.y /= 255.0f;
-//		tempVert.colour.z /= 255.0f;
-//
-//		// Add too... what? 
-//		vecTempPlyVerts.push_back(tempVert);
-//	}
-//
-//	struct sTriPly
-//	{
-//		unsigned int vindex[3];		// the 3 indices
-//		sVertPly verts[3];			// The actual vertices
-//	};
-//
-//	std::vector<sTriPly> vecTempPlyTriangles;
-//	sTriPly tempTriangle;
-//	unsigned int discard = 0;
-//	for ( unsigned int index = 0; index != ::g_NumberOfTriangles; index++ )
-//	{
-//		// 3 5622 5601 5640
-//		thePlyFile >> discard						// the "3" at the start
-//			       >> tempTriangle.vindex[0]
-//			       >> tempTriangle.vindex[1]
-//			       >> tempTriangle.vindex[2];
-//
-//		// Look up the vertex that matches the triangle index values.
-//		tempTriangle.verts[0] = vecTempPlyVerts[ tempTriangle.vindex[0] ];
-//		tempTriangle.verts[1] = vecTempPlyVerts[ tempTriangle.vindex[1] ];
-//		tempTriangle.verts[2] = vecTempPlyVerts[ tempTriangle.vindex[2] ];
-//
-//		vecTempPlyTriangles.push_back( tempTriangle );
-//	}
-//	
-//	// NOW, we need to put them into the vertex array buffer that 
-//	//	will be passed to OpenGL. Why? 
-//	// Because we called glDrawArrays(), that's why. 
-//
-//	::g_NumberOfVertsToDraw = ::g_NumberOfTriangles * 3;	// 3 because "triangles"
-//
-//	// sVert* pVertices = 0;
-//	pVertices = new sVert[::g_NumberOfVertsToDraw];
-//	// Allocate on the HEAP, so infinite size... 
-//	// delete pVertices			/// error!
-//	// delete [] pVertices		/// correct!!
-//	unsigned int vertIndex = 0;
-//	for ( unsigned int triIndex = 0; 
-//		  triIndex != ::g_NumberOfTriangles; 
-//		  triIndex++, vertIndex += 3 )
-//	{
-//		sTriPly& curTri = vecTempPlyTriangles[triIndex];
-//
-//		pVertices[ vertIndex + 0 ].x = curTri.verts[0].pos.x;
-//		pVertices[ vertIndex + 0 ].y = curTri.verts[0].pos.y;
-//		pVertices[ vertIndex + 0 ].z = curTri.verts[0].pos.z;
-//		pVertices[ vertIndex + 0 ].r = curTri.verts[0].colour.x;
-//		pVertices[ vertIndex + 0 ].g = curTri.verts[0].colour.y;
-//		pVertices[ vertIndex + 0 ].b = curTri.verts[0].colour.z;
-//
-//		pVertices[ vertIndex + 1 ].x = curTri.verts[1].pos.x;
-//		pVertices[ vertIndex + 1 ].y = curTri.verts[1].pos.y;
-//		pVertices[ vertIndex + 1 ].z = curTri.verts[1].pos.z;
-//		pVertices[ vertIndex + 1 ].r = curTri.verts[1].colour.x;
-//		pVertices[ vertIndex + 1 ].g = curTri.verts[1].colour.y;
-//		pVertices[ vertIndex + 1 ].b = curTri.verts[1].colour.z;
-//
-//		pVertices[ vertIndex + 2 ].x = curTri.verts[2].pos.x;
-//		pVertices[ vertIndex + 2 ].y = curTri.verts[2].pos.y;
-//		pVertices[ vertIndex + 2 ].z = curTri.verts[2].pos.z;
-//		pVertices[ vertIndex + 2 ].r = curTri.verts[2].colour.x;
-//		pVertices[ vertIndex + 2 ].g = curTri.verts[2].colour.y;
-//		pVertices[ vertIndex + 2 ].b = curTri.verts[2].colour.z;
-//
-//	}// for ( unsigned int triIndex = 0...
-//
-//	return;
-//}
 
 void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &window )
 {
@@ -716,44 +417,44 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 	if (state == GLFW_PRESS) { cameraEye.y -= cameraSpeed; }
 
 
-	// Adjust the lighting
+
 	if ( glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS )
 	{	// Decrease linear atten by 1%
-		g_L1.attenLinear *= 0.99f;			// -1%
+		::g_vecLights[0].attenLinear *= 0.99f;
 	}
 
 	if ( glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS )
 	{	// Increase linear atten by 1%
-		if ( g_L1.attenLinear <= 0.0f )	 
+		if ( ::g_vecLights[0].attenLinear <= 0.0f )	 
 		{ 
-			g_L1.attenLinear = 0.01f;		// Make it a tiny value
+			::g_vecLights[0].attenLinear = 0.001f;		// Make it a tiny value
 		}
 		else
 		{
-			g_L1.attenLinear *= 1.01f;		// + 1%
-			if ( g_L1.attenLinear >= 1.0f )
+			::g_vecLights[0].attenLinear *= 1.01f;		// + 1%
+			if ( ::g_vecLights[0].attenLinear >= sLight::MAX_ATTENUATION )
 			{
-				g_L1.attenLinear = 1.0f;		// Saturate to 1.0f
+				::g_vecLights[0].attenLinear = sLight::MAX_ATTENUATION;		
 			}
 		}
 	}
 	if ( glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS )
 	{	// Decrease quadratic atten by 1%
-		g_L1.attenQuad *= 0.99f;			// +1%
+		::g_vecLights[0].attenQuad *= 0.99f;			// +1%
 	}
 
 	if ( glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS )
 	{	// Increase quadratic atten by 1%
-		if ( g_L1.attenQuad <= 0.0f )	 
+		if ( ::g_vecLights[0].attenQuad <= 0.0f )	 
 		{ 
-			g_L1.attenQuad = 0.01f;		// Make it a tiny value
+			::g_vecLights[0].attenQuad = 0.0001f;		// Make it a tiny value
 		}
 		else
 		{
-			g_L1.attenQuad *= 1.01f;		// + 1%
-			if ( g_L1.attenQuad >= 1.0f )
+			::g_vecLights[0].attenQuad *= 1.01f;		// + 1%
+			if ( ::g_vecLights[0].attenQuad >= sLight::MAX_ATTENUATION )
 			{
-				g_L1.attenQuad = 1.0f;		// Saturate to 1.0f
+				::g_vecLights[0].attenQuad = sLight::MAX_ATTENUATION;		
 			}
 		}
 	}	
@@ -761,29 +462,41 @@ void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &w
 	// Also move the light around
 	if ( glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS )
 	{
-		::g_L1.position.z += 0.1f;		
+		::g_vecLights[0].position.z += cameraSpeed;		
 	}
 	if ( glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS )
 	{
-		::g_L1.position.z -= 0.1f;		
+		::g_vecLights[0].position.z -= cameraSpeed;		
 	}		
 	if ( glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS )
 	{
-		::g_L1.position.x -= 0.1f;		
+		::g_vecLights[0].position.x -= cameraSpeed;		
 	}	
 	if ( glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS )
 	{
-		::g_L1.position.x += 0.1f;		
+		::g_vecLights[0].position.x += cameraSpeed;		
 	}		
 	if ( glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS )
 	{
-		::g_L1.position.y += 0.1f;		
+		::g_vecLights[0].position.y += cameraSpeed;		
 	}		
 	if ( glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS )
 	{
-		::g_L1.position.y -= 0.1f;		
+		::g_vecLights[0].position.y -= cameraSpeed;		
 	}		
 
+
+	std::stringstream ssTitle;
+	ssTitle << "Light[0]: xyz("
+		<< ::g_vecLights[0].position.x << ", "
+		<< ::g_vecLights[0].position.y << ", "
+		<< ::g_vecLights[0].position.z << ") "
+		<< "Lin: " 
+		<< ::g_vecLights[0].attenLinear << " "
+		<< "Quad: " 
+		<< ::g_vecLights[0].attenQuad;
+
+	glfwSetWindowTitle( ::g_window, ssTitle.str().c_str() );
 
 	//std::cout << "Camera (xyz): "  
 	//		<<cameraEye.x << ", " 
@@ -801,7 +514,7 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		::g_pTheLightMesh = new cMeshObject(); 
 
-		::g_pTheLightMesh->meshName = "isosphere_xyz.ply";
+		::g_pTheLightMesh->meshName = "isosphere_smooth_xyz_n_rgba_uv.ply";
 
 		::g_pTheLightMesh->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
 		::g_pTheLightMesh->colour = glm::vec4( 142.0f/255.0f, 
@@ -818,7 +531,7 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "CrappyTerrain.ply";
+		pTemp->meshName = "CrappyTerrain_xyz_n_rgba_uv.ply";
 
 		pTemp->pos = glm::vec3( 0.0f, -10.0f, 0.0f );
 		pTemp->colour = glm::vec4( 142.0f/255.0f, 
@@ -828,13 +541,14 @@ void LoadObjectsIntoScene(void)
 		pTemp->scale = 1.0f;
 		pTemp->isWireframe = false;
 
+
 		::g_vec_pMeshObjects.push_back( pTemp );
 	}	
 	
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "cow_xyz.ply";
+		pTemp->meshName = "cow_xyz_n_rgba_uv.ply";
 
 		pTemp->pos = glm::vec3( 1.0f, 0.0f, 0.0f );
 		pTemp->colour = glm::vec4( 243.0f/255.0f,		
@@ -850,7 +564,7 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "cow_xyz.ply";
+		pTemp->meshName = "cow_xyz_n_rgba_uv.ply";
 
 		pTemp->pos = glm::vec3( 2.0f, 1.0f, 0.0f );
 		pTemp->colour = glm::vec4( 142.0f/255.0f,	
@@ -866,7 +580,7 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "bun_zipper_res2_xyz.ply";
+		pTemp->meshName = "bun_zipper_res2_xyz_n_rgba_uv.ply";
 
 		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
 		pTemp->colour = glm::vec4( 1.0f,
@@ -882,7 +596,7 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "ssj100_xyz.ply";
+		pTemp->meshName = "ssj100_xyz_n_rgba_uv.ply";
 
 		// 2 * PI   
 		// 1 PI = 180
@@ -907,7 +621,7 @@ void LoadObjectsIntoScene(void)
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
-		pTemp->meshName = "free_arena_ASCII_xyz.ply";
+		pTemp->meshName = "free_arena_ASCII_xyz_n_rgba_uv.ply";
 
 		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
 		pTemp->colour = glm::vec4( 244.0f/255.0f,  
@@ -927,9 +641,6 @@ void LoadObjectsIntoScene(void)
 	}
 
 
-
-	// std::vector< cMeshObject* > ;
-
 	return;
 }
 
@@ -938,35 +649,136 @@ void ShutErDown(void)
 	// 
 	delete ::g_pTheShaderManager;
 
+	::g_pTheVAOManager->ShutDown();
+	delete ::g_pTheVAOManager;
+
+
+	unsigned int vectorSize = (unsigned int)::g_vec_pMeshObjects.size();
+	for ( unsigned int index = 0; index != vectorSize; index++ )
+	{
+		delete ::g_vec_pMeshObjects[index];
+	}
+
+
+	return;
+}
+
+bool LoadModelTypes(GLint shadProgID, std::string &errors)
+{
+	std::stringstream ssError;
+
+	bool bAllGood = true;
+
+//	"bun_zipper_res2_xyz.ply", "ssj100_xyz.ply", "building_xyz.ply"
+	sModelDrawInfo bunny;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "bun_zipper_res2_xyz_n_rgba_uv.ply", bunny, shadProgID ) )
+	{
+		ssError << "ERROR: bun_zipper_res2_xyz_n_rgba_uv.ply wasn't loaded" << std::endl;
+		bAllGood = false;
+	}
+
+	sModelDrawInfo cow;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "cow_xyz_n_rgba_uv.ply", cow, shadProgID ) )
+	{
+		ssError << "ERROR: cow_xyz_n_rgba_uv.ply wasn't loaded" << std::endl;
+		bAllGood = false;
+	}	
+
+	sModelDrawInfo airplane;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "ssj100_xyz_n_rgba_uv.ply", airplane, shadProgID ) )
+	{
+		ssError << "ERROR: ssj100_xyz_n_rgba_uv.ply wasn't loaded" << std::endl;
+		bAllGood = false;
+	}
+
+	sModelDrawInfo arena;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "free_arena_ASCII_xyz_n_rgba_uv.ply", arena, shadProgID ) )
+	{
+		ssError << "ERROR: free_arena_ASCII_xyz_n_rgba_uv.ply wasn't loaded" << std::endl;
+		bAllGood = false;
+	}
+
+	sModelDrawInfo terrain;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "CrappyTerrain_xyz_n_rgba_uv.ply", terrain, shadProgID ) )
+	{
+		ssError << "ERROR: CrappyTerrain_xyz_n_rgba_uv.ply wasn't loaded" << std::endl;
+		bAllGood = false;
+	}
+
+	sModelDrawInfo sphere;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "isosphere_smooth_xyz_n_rgba_uv.ply", terrain, shadProgID ) )
+	{
+		ssError << "ERROR: isosphere_smooth_xyz_n_rgba_uv.ply wasn't loaded" << std::endl;
+		bAllGood = false;
+	}
+
+	errors = ssError.str();
+
+	return bAllGood;
+}
+
+//struct sLight
+//{
+//	glm::vec3 position;
+//	float attenLinear;
+//	float attenConst;
+//	float attenQuad;
+//
+//	GLint UniLoc_Position;
+//	GLint UniLoc_AttenAndLight;
+//};
+//
+//const unsigned int NUMLIGHTS = 3;
+//std::vector<sLight> g_vecLights;
+
+void SetUpTheLights(GLint shaderProgID)
+{
+	for ( int count = 0; count != NUMLIGHTS; count++ )
+	{
+		sLight tempLight;
+		// Note that the constructor set a bunch of defaults
+		::g_vecLights.push_back( tempLight );
+	}
+
+	// Set the #0 light to white
+	::g_vecLights[0].diffuseColour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+
+	::g_vecLights[0].UniLoc_Position = glGetUniformLocation( shaderProgID, "theLights[0].Position" );
+	::g_vecLights[0].UniLoc_Diffuse = glGetUniformLocation( shaderProgID, "theLights[0].Diffuse" );
+	::g_vecLights[0].UniLoc_AttenAndLight = glGetUniformLocation( shaderProgID, "theLights[0].AttenAndType" );
+
+	::g_vecLights[1].UniLoc_Position = glGetUniformLocation( shaderProgID, "theLights[1].Position" );
+	::g_vecLights[1].UniLoc_Diffuse = glGetUniformLocation( shaderProgID, "theLights[1].Diffuse" );
+	::g_vecLights[1].UniLoc_AttenAndLight = glGetUniformLocation( shaderProgID, "theLights[1].AttenAndType" );
+
+	::g_vecLights[2].UniLoc_Position = glGetUniformLocation( shaderProgID, "theLights[2].Position" );
+	::g_vecLights[2].UniLoc_Diffuse = glGetUniformLocation( shaderProgID, "theLights[2].Diffuse" );
+	::g_vecLights[2].UniLoc_AttenAndLight = glGetUniformLocation( shaderProgID, "theLights[2].AttenAndType" );
+
+	return;
+}
+
+void CopyLightInfoToShader( unsigned int numberOfLightsToCopy )
+{
+	for ( unsigned int index = 0; index != numberOfLightsToCopy; index++ )
+	{
+		sLight &curLight = ::g_vecLights[index];
+
+		glUniform3f( curLight.UniLoc_Position, curLight.position.x, curLight.position.y, curLight.position.z );
+
+		glUniform4f( curLight.UniLoc_Diffuse, 
+					 curLight.diffuseColour.r, curLight.diffuseColour.g, curLight.diffuseColour.b, 
+					 curLight.diffuseColour.a );
+
+		glUniform4f( curLight.UniLoc_AttenAndLight, 
+					 curLight.attenConst, 
+					 curLight.attenLinear, 
+					 curLight.attenQuad, 
+					 1.0f );
+	}//for ( unsigned int index = ...
+
 	return;
 }
 
 
-	////
-	//	for ( std::vector< cMeshObject* >::iterator itMesh;
-	//		  itMesh != ::g_vec_pMeshObjects.end();
-	//		  itMesh++ )
-	//	{
-	//		cMeshObject* pCurMesh = *itMesh;
-
-
-
-
-
-// Old sexy shaders
-//static const char* vertex_shader_text =
-//"uniform mat4 MVP;\n"
-//"attribute vec3 vCol;\n"		// float r, g, b;
-//"attribute vec3 vPos;\n"		// float x, y, z;
-//"varying vec3 color;\n"
-//"void main()\n"
-//"{\n"
-//"   vec3 newVertex = vPos;				\n"
-//"\n"
-//"   newVertex.x = newVertex.x / 100000.0f; \n"
-//"	newVertex.y = newVertex.y / 100000.0f; \n"
-//"	newVertex.z = newVertex.z / 100000.0f; \n"
-//"\n"
-//"    gl_Position = MVP * vec4(newVertex, 1.0);\n"
-//"    color = vCol;\n"
-//"}\n";
