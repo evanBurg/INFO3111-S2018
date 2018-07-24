@@ -168,6 +168,11 @@ int main(void)
 	GLint bUse_vColourRGBA_AlphaValue_UniLoc = glGetUniformLocation(shadProgID, "bUse_vColourRGBA_AlphaValue");
 	GLint bUseVertexColour_UniLoc = glGetUniformLocation(shadProgID, "bUseVertexColour");
 
+<<<<<<< HEAD
+=======
+	GLint bDontLightObject_UniLoc = glGetUniformLocation(shadProgID, "bDontLightObject" );
+	
+>>>>>>> 12669797d6ec7cd39471bac39f29ee06f6fadd70
 	// Shader uniform variables
 
 	// The light values...
@@ -322,6 +327,14 @@ int main(void)
 			glUniform1f(bUse_vColourRGBA_AlphaValue_UniLoc, GL_FALSE);
 			glUniform1f(bUseVertexColour_UniLoc, GL_TRUE);
 
+			if ( pCurMesh->bDontLightObject )
+			{
+				glUniform1f( bDontLightObject_UniLoc, GL_TRUE );
+			}
+			else 
+			{
+				glUniform1f( bDontLightObject_UniLoc, GL_FALSE );
+			}
 
 
 			// Is it wireframe? 
@@ -524,8 +537,15 @@ void LoadObjectsIntoScene(void)
 		::g_pTheLightMesh->scale = 0.1f;
 		::g_pTheLightMesh->isWireframe = false;
 
+<<<<<<< HEAD
 		::g_vec_pMeshObjects.push_back(::g_pTheLightMesh);
 	}
+=======
+		::g_pTheLightMesh->bDontLightObject = true;
+
+		::g_vec_pMeshObjects.push_back( ::g_pTheLightMesh );
+	}	
+>>>>>>> 12669797d6ec7cd39471bac39f29ee06f6fadd70
 
 
 	{// Add an object into the "scene"

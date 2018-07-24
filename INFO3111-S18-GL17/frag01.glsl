@@ -7,7 +7,7 @@ in vec4 vertWorldPosXYZ;
 in vec4 vertNormal;
 in vec4 vertTexUV;	
 
-bool bDoTheSexyThing;
+uniform bool bDontLightObject;
 
 const int NUMLIGHTS = 3;
 
@@ -58,6 +58,14 @@ uniform vec3 lightColour3;
 uniform bool AffectedByLight;
 void main()
 {
+	
+	if ( bDontLightObject )
+	{
+		outputColour = vertColourRGBA;
+		// early exit
+		return;	
+	}
+
 	// Take the colour of the thing, and set the output 
 	//	colour to that to start... 
 
@@ -96,6 +104,23 @@ void main()
 	
 	for ( int index = 0; index != NUMLIGHTS; index++ )
 	{
+	
+		// The Diffuse component (aka how much light is reflecting off the surface?)
+		
+		vec3 lightVector = theLights[index].Position - vertWorldPosXYZ.xyz;
+		// 'normalize' means a vector of unit (1.0) length
+		// (to make the math not screw up)
+		lightVector = normalize(lightVector);
+		
+		// Get the dot product of the light and normalize
+		float dotProduct = dot( lightVector, normalize(vertNormal.xyz) );	// -1 to 1
+		
+		dotProduct = max( 0.0f, dotProduct );		// 0 to 1
+		
+		vec3 lightContrib = theLights[index].Diffuse.rgb;
+	
+		lightContrib *= dotProduct;
+	
 		// Calculate the distance between the light 
 		// and the vertex that this fragment is using
 		float lightDistance = distance( vertWorldPosXYZ.xyz, theLights[index].Position );
@@ -109,7 +134,6 @@ void main()
 // Optional clamp of attenuation, so the light won't get 'too' dark			
 //		attenuation = clamp( attenuation, 0.0f, 1000.0f );
 
-		vec3 lightContrib = theLights[index].Diffuse.rgb;
 		
 		lightContrib *= attenuation;
 		

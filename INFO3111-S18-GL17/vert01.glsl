@@ -43,11 +43,15 @@ void main()
 	vertWorldPosXYZ = matModel * newVertex;
 
 	// Calculate the "rotation only" transformation for the normals;
+	// NO scale
+	// NO tranlations (moves)
+	// ONLY rotation
 	vertNormal = inverse(transpose(matModel)) * normalize(vNormal);
 	
 	vertTexUV = vTexUV;
 	
 	vertColourRGBA.rgb = meshColourRGBA.rgb;
+	
 	// By default, we use the 'whole object' 
 	// alpha (transparency) value...
 	vertColourRGBA.a = meshColourRGBA.a;
