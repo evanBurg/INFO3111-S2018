@@ -129,6 +129,8 @@ void LoadObjectsIntoScene(void)
 
 		pTemp->friendlyName = "Bugs";		// as in Bugs Bunny
 
+		pTemp->velocity.y = 2.0f;
+
 		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
 		pTemp->colour = glm::vec4( 1.0f,
 								   1.0f, 

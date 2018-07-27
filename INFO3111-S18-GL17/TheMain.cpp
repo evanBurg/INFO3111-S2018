@@ -48,6 +48,9 @@ cShaderManager* g_pTheShaderManager = 0;	// NULL, 0, nullptr
 
 cVAOManager* g_pTheVAOManager = 0;
 
+// When true, the DoPhysicsUpdate is called.
+bool g_bDoEulerPhysicsUpdate = false;		
+
 
 // This will get more involved
 struct sLight
@@ -125,9 +128,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		}
 
 
-
-
-
 	}//if ( mods == GLFW_MOD_SHIFT )
 
 	if ( ( mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT )
@@ -135,6 +135,19 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		// Shift, and any other modifier, too.
 		//DestroyAllHumans();
 	}
+
+	// STARTOF: Turn the physics updater on or off
+	if ( ( mods & GLFW_MOD_CONTROL ) == GLFW_MOD_CONTROL )
+	{
+		if ( ( key == GLFW_KEY_P ) && ( action == GLFW_PRESS ) )
+		{
+			::g_bDoEulerPhysicsUpdate = true;
+		}
+		else if ( ( key == GLFW_KEY_O ) && ( action == GLFW_PRESS ) )
+		{
+			::g_bDoEulerPhysicsUpdate = false;
+		}
+	}// ENDOF: Turn the physics updater on or off
 
 	return;
 }
@@ -279,46 +292,61 @@ int main(void)
 
 	while (!glfwWindowShouldClose(::g_window))
 	{
+		
+		//    ___                    ___ _           _         _   _          _      _            
+		//   | __|_ _ _ _  __ _  _  | _ \ |_ _  _ __(_)__ ___ | | | |_ __  __| |__ _| |_ ___ _ _  
+		//   | _/ _` | ' \/ _| || | |  _/ ' \ || (_-< / _(_-< | |_| | '_ \/ _` / _` |  _/ -_) '_| 
+		//   |_|\__,_|_||_\__|\_, | |_| |_||_\_, /__/_\__/__/  \___/| .__/\__,_\__,_|\__\___|_|   
+		//                    |__/           |__/                   |_|                           
+		if ( ::g_bDoEulerPhysicsUpdate )
+		{
+			double currentTime = glfwGetTime();
+			// Aka "frame time"
+			double deltaTime = currentTime - globalLastTimeStamp;
+			DoPhysicsIntegrationUpdate(deltaTime);
+			globalLastTimeStamp = currentTime;
 
-		//double currentTime = glfwGetTime();
-		//// Aka "frame time"
-		//double deltaTime = currentTime - globalLastTimeStamp;
-		//DoPhysicsIntegrationUpdate(deltaTime);
-		//deltaTime = currentTime;
 
+			// Move the bunny every 0.5 second
+			cMeshObject* pBunny = ::g_pFindObjectByFriendlyName("Bugs");
 
-		// Move the bunny every 0.5 second
-		cMeshObject* pBunny = ::g_pFindObjectByFriendlyName("Bugs");
+			// Apply gravity to bunny
+			pBunny->acceleration.y = -1.0f; 
+			std::cout 
+				<< "a = " << pBunny->acceleration.y << ", " 
+				<< "v = " << pBunny->velocity.y << std::endl;
 
-		// Apply gravity to bunny
-//		pBunny->acceleration.y = -0.01f; 
-		//std::cout << pBunny->acceleration.y << "< " 
-		//	<< pBunny->velocity.y << std::endl;
-
-		//if ( pBunny->pos.y <= -5.0f )
-		//{
-		//	pBunny->velocity.y = fabs(pBunny->velocity.y);
-		//	pBunny->pos.y = -5.0f;
-		//}
+			if ( pBunny->pos.y <= -2.0f )
+			{
+				pBunny->velocity.y = fabs(pBunny->velocity.y);
+				pBunny->pos.y = -2.0f;
+			}
+		}//if ( ::g_bDoEulerPhysicsUpdate )
 		
 
-		if ( pBunny )
-		{
-			//pBunny->pos.y += 0.01f;		// contin. motion
 
-			double currentTime = glfwGetTime();
-			const double TIME_WE_SHOULD_WAIT = 0.5;		// 500 ms
+		//    ___          _                                      _   
+		//   | _ ) __ _ __(_)__   _ __  _____ _____ _ __  ___ _ _| |_ 
+		//   | _ \/ _` (_-< / _| | '  \/ _ \ V / -_) '  \/ -_) ' \  _|
+		//   |___/\__,_/__/_\__| |_|_|_\___/\_/\___|_|_|_\___|_||_\__|
+		//                                                            
+		//if ( pBunny )
+		//{
+		//	//pBunny->pos.y += 0.01f;		// contin. motion
 
-			// How much time has passed? 
-			if ( (currentTime - lastTime) > TIME_WE_SHOULD_WAIT )
-			{
-				// Do the thing
-				pBunny->pos.y += 0.01f;
-				lastTime = glfwGetTime();		// "reset" the "last" time
+		//	double currentTime = glfwGetTime();
+		//	const double TIME_WE_SHOULD_WAIT = 0.5;		// 500 ms
 
-			}//if ( (currentTime..
+		//	// How much time has passed? 
+		//	if ( (currentTime - lastTime) > TIME_WE_SHOULD_WAIT )
+		//	{
+		//		// Do the thing
+		//		pBunny->pos.y += 0.01f;
+		//		lastTime = glfwGetTime();		// "reset" the "last" time
 
-		}//if ( pBunny )
+		//	}//if ( (currentTime..
+
+		//}//if ( pBunny )
 
 
 		float ratio;
@@ -594,7 +622,7 @@ int main(void)
 
 void ProcessInput( glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &window )
 {
-	float cameraSpeed = 0.01f; 
+	float cameraSpeed = 0.05f; 
 
 	int state = glfwGetKey(window, GLFW_KEY_D);
 	if (state == GLFW_PRESS) { cameraEye.x += cameraSpeed; }
@@ -775,7 +803,7 @@ bool LoadModelTypes(GLint shadProgID, std::string &errors)
 	}
 
 	sModelDrawInfo sphere;
-	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "isosphere_smooth_xyz_n_rgba_uv.ply", terrain, shadProgID ) )
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "isosphere_smooth_xyz_n_rgba_uv.ply", sphere, shadProgID ) )
 	{
 		ssError << "ERROR: isosphere_smooth_xyz_n_rgba_uv.ply wasn't loaded" << std::endl;
 		bAllGood = false;
@@ -860,22 +888,36 @@ void CopyLightInfoToShader( unsigned int numberOfLightsToCopy )
 
 void DoPhysicsIntegrationUpdate(double deltaTime)
 {
+	// Check if too big
+	const double BIGGEST_TIME_STEP_ALLOWED = 0.1f;	// 100 ms is pretty big...
+	
+	if ( deltaTime > BIGGEST_TIME_STEP_ALLOWED )
+	{
+		deltaTime = BIGGEST_TIME_STEP_ALLOWED;
+	}
+
+
+
 	unsigned int numberOfObjects = (unsigned int)::g_vec_pMeshObjects.size();
 	for ( unsigned int meshIndex = 0;
 		meshIndex != numberOfObjects; meshIndex++ )
 	{
 		cMeshObject* pCurMesh = ::g_vec_pMeshObjects[meshIndex];
 
-		// new position = old postion + velocity * time
+		if ( pCurMesh->friendlyName != "Bugs" )
+		{
+			continue;
+		}
 
-		glm::vec3 deltaVel = (float)deltaTime * pCurMesh->velocity;
-		pCurMesh->pos += (pCurMesh->velocity * deltaVel);
+		// new position = old postion + (velocity * time)
+		// new velocity = old velocity + (acceleration * time)
 
-		// Same for change in velocity.
-		// velocity changes based on acceleration
-		glm::vec3 deltaAcc = (float)deltaTime * pCurMesh->acceleration;
-		pCurMesh->velocity += (pCurMesh->acceleration * deltaAcc);
+		pCurMesh->velocity += (float)deltaTime * pCurMesh->acceleration;
 
+		pCurMesh->pos += (float)deltaTime * pCurMesh->velocity;
+
+
+		pCurMesh = NULL;
 	}
 
 
