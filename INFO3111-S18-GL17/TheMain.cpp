@@ -22,11 +22,18 @@
 
 #include "cMeshObject.h"
 
+#include "commonEngineStuff.h"
+// A vector of POINTERS to mesh objects...
+//std::vector< cMeshObject* > g_vec_pMeshObjects;
+//cMeshObject* g_pTheLightMesh = 0;		// or NULL
+
+#include "cLightHelper.h"
+
+
 void ShutErDown(void);
 
 GLFWwindow* g_window = 0;
 
-cMeshObject* g_pTheLightMesh = 0;		// or NULL
 
 
 unsigned int g_NumberOfVertices = 0;		// From file
@@ -34,9 +41,8 @@ unsigned int g_NumberOfTriangles = 0;		// From file
 
 bool LoadModelTypes(GLint shaderID, std::string &errors);
 
-// A vector of POINTERS to mesh objects...
-std::vector< cMeshObject* > g_vec_pMeshObjects;
-void LoadObjectsIntoScene(void);
+
+//void LoadObjectsIntoScene(void);
 
 cShaderManager* g_pTheShaderManager = 0;	// NULL, 0, nullptr
 
@@ -61,8 +67,8 @@ struct sLight
 
 	glm::vec3 position;
 	glm::vec4 diffuseColour;
-	float attenLinear;
 	float attenConst;
+	float attenLinear;
 	float attenQuad;
 
 	GLint UniLoc_Position;
@@ -181,6 +187,8 @@ int main(void)
 	::g_vecLights[0].attenLinear = 0.324f;		// Why this number? It looked nice!
 	::g_vecLights[0].attenQuad = 0.0115f;		// Same with this number!
 
+	cLightHelper theLightHelper;
+
 
 	::g_pTheVAOManager = new cVAOManager();
 
@@ -249,6 +257,46 @@ int main(void)
 							//// move that light mesh to where the light is at, yo
 		::g_pTheLightMesh->pos = ::g_vecLights[0].position;
 
+		// Take the other 4 meshes and change the location to where the light is
+		::g_pTheLightAttenMesh[0]->pos 
+			= ::g_pTheLightAttenMesh[1]->pos
+			= ::g_pTheLightAttenMesh[2]->pos
+			= ::g_pTheLightAttenMesh[3]->pos = ::g_pTheLightMesh->pos;
+
+		// Draw sphere 0 at 1% brightness
+		float distance = theLightHelper.calcApproxDistFromAtten
+			( 0.01f,   
+			  cLightHelper::DEFAULDIFFUSEACCURACYTHRESHOLD, 
+			  cLightHelper::DEFAULTINFINITEDISTANCE, 
+			  ::g_vecLights[0].attenConst,
+			  ::g_vecLights[0].attenLinear, 
+			  ::g_vecLights[0].attenQuad );
+
+		::g_pTheLightAttenMesh[0]->scale = distance;
+
+		// Draw sphere 0 at 50% brightness
+		distance = theLightHelper.calcApproxDistFromAtten
+			( 0.50f,   
+			  cLightHelper::DEFAULDIFFUSEACCURACYTHRESHOLD, 
+			  cLightHelper::DEFAULTINFINITEDISTANCE, 
+			  ::g_vecLights[0].attenConst,
+			  ::g_vecLights[0].attenLinear, 
+			  ::g_vecLights[0].attenQuad );
+
+		::g_pTheLightAttenMesh[1]->scale = distance;
+
+		// Draw sphere 0 at 90% brightness
+		distance = theLightHelper.calcApproxDistFromAtten
+			( 0.90f,   
+			  cLightHelper::DEFAULDIFFUSEACCURACYTHRESHOLD, 
+			  cLightHelper::DEFAULTINFINITEDISTANCE, 
+			  ::g_vecLights[0].attenConst,
+			  ::g_vecLights[0].attenLinear, 
+			  ::g_vecLights[0].attenQuad );
+
+		::g_pTheLightAttenMesh[2]->scale = distance;
+
+
 		CopyLightInfoToShader(NUMLIGHTS);
 
 
@@ -263,6 +311,7 @@ int main(void)
 
 			//mat4x4_identity(m);
 			matModel = glm::mat4(1.0f);		// because "math"
+			
 
 
 											// Place the object in the world at 'this' location
@@ -337,9 +386,9 @@ int main(void)
 			// Is it wireframe? 
 			if (pCurMesh->isWireframe)
 			{	// Yuppers.
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				glDisable(GL_DEPTH_TEST);
-				glDisable(GL_CULL_FACE);
+				glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+				//glDisable( GL_DEPTH_TEST );
+				glDisable( GL_CULL_FACE );
 			}
 			else
 			{
@@ -414,7 +463,7 @@ void ProcessInput(glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &wi
 	state = glfwGetKey(window, GLFW_KEY_A);
 	if (state == GLFW_PRESS) { cameraEye.x -= cameraSpeed; }
 
-	state = glfwGetKey(window, GLFW_KEY_W);
+		state = glfwGetKey(window, GLFW_KEY_W);
 	if (state == GLFW_PRESS) { cameraEye.z += cameraSpeed; }
 
 	state = glfwGetKey(window, GLFW_KEY_S);
@@ -514,147 +563,147 @@ void ProcessInput(glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &wi
 	//		<< cameraEye.z << std::endl;
 	return;
 }
+//
+////std::vector< cMeshObject* > g_vec_pMeshObjects;
+//void LoadObjectsIntoScene(void)
+//{
+//
+//
+//	{// Add an object into the "scene"
+//		::g_pTheLightMesh = new cMeshObject();
+//
+//		::g_pTheLightMesh->meshName = "isosphere_smooth_xyz_n_rgba_uv.ply";
+//
+//		::g_pTheLightMesh->pos = glm::vec3(0.0f, 0.0f, 0.0f);
+//		::g_pTheLightMesh->colour = glm::vec4(142.0f / 255.0f,
+//			205.0f / 255.0f,
+//			49.0f / 255.0f,
+//			1.0f);		// Transparency 'alpha'
+//		::g_pTheLightMesh->scale = 0.1f;
+//		::g_pTheLightMesh->isWireframe = false;
+//
+//		::g_pTheLightMesh->bDontLightObject = true;
+//
+//		::g_vec_pMeshObjects.push_back( ::g_pTheLightMesh );
+//	}	
+//
+//
+//	{// Add an object into the "scene"
+//		cMeshObject* pTemp = new cMeshObject();
+//
+//		pTemp->meshName = "CrappyTerrain_xyz_n_rgba_uv.ply";
+//
+//		pTemp->pos = glm::vec3(0.0f, -10.0f, 0.0f);
+//		pTemp->colour = glm::vec4(142.0f / 255.0f,
+//			205.0f / 255.0f,
+//			49.0f / 255.0f,
+//			1.0f);		// Transparency 'alpha'
+//		pTemp->scale = 1.0f;
+//		pTemp->isWireframe = false;
+//
+//
+//		::g_vec_pMeshObjects.push_back(pTemp);
+//	}
+//
+//	{// Add an object into the "scene"
+//		cMeshObject* pTemp = new cMeshObject();
+//
+//		pTemp->meshName = "cow_xyz_n_rgba_uv.ply";
+//
+//		pTemp->pos = glm::vec3(1.0f, 0.0f, 0.0f);
+//		pTemp->colour = glm::vec4(243.0f / 255.0f,
+//			9.0f / 255.0f,
+//			25.0f / 255.0f,
+//			1.0f);		// Transparency 'alpha'
+//		pTemp->scale = 0.05f;
+//		pTemp->isWireframe = false;
+//
+//		::g_vec_pMeshObjects.push_back(pTemp);
+//	}
+//
+//	{// Add an object into the "scene"
+//		cMeshObject* pTemp = new cMeshObject();
+//
+//		pTemp->meshName = "cow_xyz_n_rgba_uv.ply";
+//
+//		pTemp->pos = glm::vec3(2.0f, 1.0f, 0.0f);
+//		pTemp->colour = glm::vec4(142.0f / 255.0f,
+//			205.0f / 255.0f,
+//			248.0f / 255.0f,
+//			1.0f);		// Transparency 'alpha'
+//		pTemp->scale = 0.1f;
+//		pTemp->isWireframe = false;
+//
+//		::g_vec_pMeshObjects.push_back(pTemp);
+//	}
+//
+//	{// Add an object into the "scene"
+//		cMeshObject* pTemp = new cMeshObject();
+//
+//		pTemp->meshName = "bun_zipper_res2_xyz_n_rgba_uv.ply";
+//
+//		pTemp->pos = glm::vec3(0.0f, 0.0f, 0.0f);
+//		pTemp->colour = glm::vec4(1.0f,
+//			1.0f,
+//			1.0f,
+//			1.0f);		// Transparency 'alpha'
+//		pTemp->scale = 2.0f;
+//		pTemp->isWireframe = false;
+//
+//		::g_vec_pMeshObjects.push_back(pTemp);
+//	}
+//
+//	{// Add an object into the "scene"
+//		cMeshObject* pTemp = new cMeshObject();
+//
+//		pTemp->meshName = "ssj100_xyz_n_rgba_uv.ply";
+//
+//		// 2 * PI   
+//		// 1 PI = 180
+//		// 0.5 = 90 
+//		// 0.25 = 45
+//
+//
+//		//		pTemp->orientation.x = 3.14159f * 0.25f;		// YOLO, right? 
+//		pTemp->orientation.y = glm::pi<float>() * 0.5f;		// YOLO, right? 
+//
+//		pTemp->pos = glm::vec3(-1.0f, 0.0f, 0.0f);
+//		pTemp->colour = glm::vec4(142.0f / 255.0f,
+//			49.0f / 255.0f,
+//			205.0f / 255.0f,
+//			1.0f);		// Transparency 'alpha'
+//		pTemp->scale = 1.5f;
+//		pTemp->isWireframe = false;
+//
+//		::g_vec_pMeshObjects.push_back(pTemp);
+//	}
+//
+//	{// Add an object into the "scene"
+//		cMeshObject* pTemp = new cMeshObject();
+//
+//		pTemp->meshName = "free_arena_ASCII_xyz_n_rgba_uv.ply";
+//
+//		pTemp->pos = glm::vec3(0.0f, 0.0f, 0.0f);
+//		pTemp->colour = glm::vec4(244.0f / 255.0f,
+//			223.0f / 255.0f,
+//			33.0f / 255.0f,
+//			1.0f);		// Transparency 'alpha'
+//						// Largest "extent" in this model
+//						// is 40.2828 
+//
+//		pTemp->scale = 1.0f / 40.2828f;
+//
+//		// Now my model 1.0 unit in size (-1 to 1)
+//
+//		pTemp->isWireframe = false;
+//
+//		::g_vec_pMeshObjects.push_back(pTemp);
+//	}
+//
+//
+//	return;
+//}
 
-
-//std::vector< cMeshObject* > g_vec_pMeshObjects;
-void LoadObjectsIntoScene(void)
-{
-
-
-	{// Add an object into the "scene"
-		::g_pTheLightMesh = new cMeshObject();
-
-		::g_pTheLightMesh->meshName = "isosphere_smooth_xyz_n_rgba_uv.ply";
-
-		::g_pTheLightMesh->pos = glm::vec3(0.0f, 0.0f, 0.0f);
-		::g_pTheLightMesh->colour = glm::vec4(142.0f / 255.0f,
-			205.0f / 255.0f,
-			49.0f / 255.0f,
-			1.0f);		// Transparency 'alpha'
-		::g_pTheLightMesh->scale = 0.1f;
-		::g_pTheLightMesh->isWireframe = false;
-
-		::g_pTheLightMesh->bDontLightObject = true;
-
-		::g_vec_pMeshObjects.push_back( ::g_pTheLightMesh );
-	}	
-
-
-	{// Add an object into the "scene"
-		cMeshObject* pTemp = new cMeshObject();
-
-		pTemp->meshName = "CrappyTerrain_xyz_n_rgba_uv.ply";
-
-		pTemp->pos = glm::vec3(0.0f, -10.0f, 0.0f);
-		pTemp->colour = glm::vec4(142.0f / 255.0f,
-			205.0f / 255.0f,
-			49.0f / 255.0f,
-			1.0f);		// Transparency 'alpha'
-		pTemp->scale = 1.0f;
-		pTemp->isWireframe = false;
-
-
-		::g_vec_pMeshObjects.push_back(pTemp);
-	}
-
-	{// Add an object into the "scene"
-		cMeshObject* pTemp = new cMeshObject();
-
-		pTemp->meshName = "cow_xyz_n_rgba_uv.ply";
-
-		pTemp->pos = glm::vec3(1.0f, 0.0f, 0.0f);
-		pTemp->colour = glm::vec4(243.0f / 255.0f,
-			9.0f / 255.0f,
-			25.0f / 255.0f,
-			1.0f);		// Transparency 'alpha'
-		pTemp->scale = 0.05f;
-		pTemp->isWireframe = false;
-
-		::g_vec_pMeshObjects.push_back(pTemp);
-	}
-
-	{// Add an object into the "scene"
-		cMeshObject* pTemp = new cMeshObject();
-
-		pTemp->meshName = "cow_xyz_n_rgba_uv.ply";
-
-		pTemp->pos = glm::vec3(2.0f, 1.0f, 0.0f);
-		pTemp->colour = glm::vec4(142.0f / 255.0f,
-			205.0f / 255.0f,
-			248.0f / 255.0f,
-			1.0f);		// Transparency 'alpha'
-		pTemp->scale = 0.1f;
-		pTemp->isWireframe = false;
-
-		::g_vec_pMeshObjects.push_back(pTemp);
-	}
-
-	{// Add an object into the "scene"
-		cMeshObject* pTemp = new cMeshObject();
-
-		pTemp->meshName = "bun_zipper_res2_xyz_n_rgba_uv.ply";
-
-		pTemp->pos = glm::vec3(0.0f, 0.0f, 0.0f);
-		pTemp->colour = glm::vec4(1.0f,
-			1.0f,
-			1.0f,
-			1.0f);		// Transparency 'alpha'
-		pTemp->scale = 2.0f;
-		pTemp->isWireframe = false;
-
-		::g_vec_pMeshObjects.push_back(pTemp);
-	}
-
-	{// Add an object into the "scene"
-		cMeshObject* pTemp = new cMeshObject();
-
-		pTemp->meshName = "ssj100_xyz_n_rgba_uv.ply";
-
-		// 2 * PI   
-		// 1 PI = 180
-		// 0.5 = 90 
-		// 0.25 = 45
-
-
-		//		pTemp->orientation.x = 3.14159f * 0.25f;		// YOLO, right? 
-		pTemp->orientation.y = glm::pi<float>() * 0.5f;		// YOLO, right? 
-
-		pTemp->pos = glm::vec3(-1.0f, 0.0f, 0.0f);
-		pTemp->colour = glm::vec4(142.0f / 255.0f,
-			49.0f / 255.0f,
-			205.0f / 255.0f,
-			1.0f);		// Transparency 'alpha'
-		pTemp->scale = 1.5f;
-		pTemp->isWireframe = false;
-
-		::g_vec_pMeshObjects.push_back(pTemp);
-	}
-
-	{// Add an object into the "scene"
-		cMeshObject* pTemp = new cMeshObject();
-
-		pTemp->meshName = "free_arena_ASCII_xyz_n_rgba_uv.ply";
-
-		pTemp->pos = glm::vec3(0.0f, 0.0f, 0.0f);
-		pTemp->colour = glm::vec4(244.0f / 255.0f,
-			223.0f / 255.0f,
-			33.0f / 255.0f,
-			1.0f);		// Transparency 'alpha'
-						// Largest "extent" in this model
-						// is 40.2828 
-
-		pTemp->scale = 1.0f / 40.2828f;
-
-		// Now my model 1.0 unit in size (-1 to 1)
-
-		pTemp->isWireframe = false;
-
-		::g_vec_pMeshObjects.push_back(pTemp);
-	}
-
-
-	return;
-}
 
 void ShutErDown(void)
 {
