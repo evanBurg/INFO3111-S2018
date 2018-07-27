@@ -7,6 +7,10 @@
 //
 //extern cMeshObject* g_pTheLightMesh = 0;		// or NULL
 
+// To handle the scaling of the object
+#include "cVAOManager.h"	
+// Should be in a header somewhere... 
+extern cVAOManager* g_pTheVAOManager;// = 0;
 
 
 //std::vector< cMeshObject* > g_vec_pMeshObjects;
@@ -24,7 +28,15 @@ void LoadObjectsIntoScene(void)
 								   205.0f/255.0f,
 									49.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
-		::g_pTheLightMesh->scale = 0.1f;
+
+		// Get the "unit" scale from the VAOManager
+		sModelDrawInfo modelInfo;
+		::g_pTheVAOManager->FindDrawInfoByModelName ( ::g_pTheLightMesh->meshName, 
+													  modelInfo );
+		//::g_pTheLightMesh->scale = 0.1f;
+		::g_pTheLightMesh->scale = 1.0f / modelInfo.maxExtent;
+
+
 		::g_pTheLightMesh->isWireframe = false;
 
 		::g_pTheLightMesh->bDontLightObject = true;
@@ -78,7 +90,12 @@ void LoadObjectsIntoScene(void)
 								     9.0f/255.0f,
 								    25.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
-		pTemp->scale = 0.05f;
+		sModelDrawInfo modelInfo;
+		::g_pTheVAOManager->FindDrawInfoByModelName ( pTemp->meshName, 
+													  modelInfo );
+		//pTemp->scale = 0.05f;
+		pTemp->scale = 1.0f / modelInfo.maxExtent;
+
 		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
@@ -94,7 +111,12 @@ void LoadObjectsIntoScene(void)
 								   205.0f/255.0f,
 								   248.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
-		pTemp->scale = 0.1f;
+		sModelDrawInfo modelInfo;
+		::g_pTheVAOManager->FindDrawInfoByModelName ( pTemp->meshName, 
+													  modelInfo );
+		//pTemp->scale = 0.1f;
+		pTemp->scale = 1.0f / modelInfo.maxExtent;
+
 		pTemp->isWireframe = true;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
@@ -105,17 +127,52 @@ void LoadObjectsIntoScene(void)
 
 		pTemp->meshName = "bun_zipper_res2_xyz_n_rgba_uv.ply";
 
+		pTemp->friendlyName = "Bugs";		// as in Bugs Bunny
+
 		pTemp->pos = glm::vec3( 0.0f, 0.0f, 0.0f );
 		pTemp->colour = glm::vec4( 1.0f,
 								   1.0f, 
 									1.0f,
 									 1.0f );		// Transparency 'alpha'
 		pTemp->scale = 2.0f;
+		sModelDrawInfo modelInfo;
+		::g_pTheVAOManager->FindDrawInfoByModelName ( pTemp->meshName, 
+													  modelInfo );
+		//pTemp->scale = 2.0f;
+		pTemp->scale = 1.0f / modelInfo.maxExtent;
+
 		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
 	}
 
+	{// Add an object into the "scene"
+		cMeshObject* pTemp = new cMeshObject(); 
+
+		pTemp->meshName = "X-Wing_Attack_(33569 faces)_xyz_n_rgba_uv.ply";
+
+		pTemp->friendlyName = "Luke";		
+
+		pTemp->pos = glm::vec3( 0.0f, 2.0f, 0.0f );
+		pTemp->colour = glm::vec4( 1.0f,  1.0f, 1.0f, 1.0f );		// Transparency 'alpha'
+		pTemp->orientation = glm::vec3(0.0f, glm::radians(180.0f), 0.0f );
+
+		// 1.0 unit per second
+//		pTemp->velocity.z = 0.1f;
+		pTemp->acceleration.z = 0.01f;
+
+
+		sModelDrawInfo modelInfo;
+		::g_pTheVAOManager->FindDrawInfoByModelName ( pTemp->meshName, 
+													  modelInfo );
+		//pTemp->scale = 2.0f;
+		pTemp->scale = 1.0f / modelInfo.maxExtent;
+		pTemp->scale *= 2.0f;			// a bit bigger
+
+		pTemp->isWireframe = false;
+
+		::g_vec_pMeshObjects.push_back( pTemp );
+	}
 	{// Add an object into the "scene"
 		cMeshObject* pTemp = new cMeshObject(); 
 
@@ -135,7 +192,12 @@ void LoadObjectsIntoScene(void)
 									49.0f/255.0f,
 								   205.0f/255.0f,
 									 1.0f );		// Transparency 'alpha'
-		pTemp->scale = 1.5f;
+		sModelDrawInfo modelInfo;
+		::g_pTheVAOManager->FindDrawInfoByModelName ( pTemp->meshName, 
+													  modelInfo );
+		//pTemp->scale = 1.5f;
+		pTemp->scale = 1.0f / modelInfo.maxExtent;
+
 		pTemp->isWireframe = false;
 
 		::g_vec_pMeshObjects.push_back( pTemp );
@@ -154,7 +216,12 @@ void LoadObjectsIntoScene(void)
 		// Largest "extent" in this model
 		// is 40.2828 
 		
-		pTemp->scale = 1.0f/40.2828f;
+		sModelDrawInfo modelInfo;
+		::g_pTheVAOManager->FindDrawInfoByModelName ( pTemp->meshName, 
+													  modelInfo );
+		//pTemp->scale = 1.0f/40.2828f;
+		pTemp->scale = 1.0f / modelInfo.maxExtent;
+
 
 		// Now my model 1.0 unit in size (-1 to 1)
 

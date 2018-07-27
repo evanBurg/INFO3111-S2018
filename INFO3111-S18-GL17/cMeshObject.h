@@ -22,6 +22,17 @@ public:
 
 	const unsigned int uniqueID = 0;
 
+	bool bIsVisible; 
+
+	// This is the name of the object that makes sense to us humans
+	std::string friendlyName;
+
+	// Basic physics integration
+	// (NOT on mid-term, but handy)
+	glm::vec3 velocity;
+	glm::vec3 acceleration;
+
+
 private:
 	void m_AssignUniqueID(void);
 	static unsigned int m_nextID;	// = 1000

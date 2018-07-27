@@ -9,7 +9,7 @@ in vec4 vertTexUV;
 
 uniform bool bDontLightObject;
 
-const int NUMLIGHTS = 1;
+const int NUMLIGHTS = 3;
 
 struct sLight
 {
@@ -22,6 +22,7 @@ struct sLight
 	vec4 AttenAndType;	// 0 = point, 1 = spot, 2 = directional 
 };
 uniform sLight theLights[NUMLIGHTS];
+//uniform int numberOfLightsImReallyUsing;
 
 
 out vec4 outputColour;
