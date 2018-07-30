@@ -48,6 +48,9 @@ cShaderManager* g_pTheShaderManager = 0;	// NULL, 0, nullptr
 
 cVAOManager* g_pTheVAOManager = 0;
 
+// When true, the DoPhysicsUpdate is called.
+bool g_bDoEulerPhysicsUpdate = false;		
+
 
 // This will get more involved
 struct sLight
@@ -92,10 +95,61 @@ static void error_callback(int error, const char* description)
 {
 	fprintf(stderr, "Error: %s\n", description);
 }
+
+// This one is connected to the regular "keyboard" handler in Winders.
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
+	}
+
+	// Is the shift key pressed at the same time?
+	if ( mods == GLFW_MOD_SHIFT )	// ONLY shift and nothing else
+	{
+		if ( ( key == GLFW_KEY_L) && (action == GLFW_PRESS) )
+		{
+			::g_bTurnOnDebugLightSpheres =  ! ::g_bTurnOnDebugLightSpheres;
+		}
+
+		// Select the next light:
+		if ( ( key == GLFW_KEY_9 ) && ( action == GLFW_PRESS ) )
+		{
+			::g_SelectedLightID--;
+		}
+		if ( ( key == GLFW_KEY_0 ) && ( action == GLFW_PRESS ) )
+		{
+			::g_SelectedLightID++;
+		}
+		//Check for wrap around...
+		if ( ::g_SelectedLightID >= NUMLIGHTS )
+		{
+			::g_SelectedLightID = NUMLIGHTS - 1;
+		}
+
+
+	}//if ( mods == GLFW_MOD_SHIFT )
+
+	if ( ( mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT )
+	{
+		// Shift, and any other modifier, too.
+		//DestroyAllHumans();
+	}
+
+	// STARTOF: Turn the physics updater on or off
+	if ( ( mods & GLFW_MOD_CONTROL ) == GLFW_MOD_CONTROL )
+	{
+		if ( ( key == GLFW_KEY_P ) && ( action == GLFW_PRESS ) )
+		{
+			::g_bDoEulerPhysicsUpdate = true;
+		}
+		else if ( ( key == GLFW_KEY_O ) && ( action == GLFW_PRESS ) )
+		{
+			::g_bDoEulerPhysicsUpdate = false;
+		}
+	}// ENDOF: Turn the physics updater on or off
+
+	return;
 }
 
 // Processes input (defined below)
@@ -181,11 +235,23 @@ int main(void)
 	// The light values...
 	SetUpTheLights(shadProgID);
 
-	::g_vecLights[0].position = glm::vec3(2.0f, 2.0f, 0.0f);
-	::g_vecLights[0].diffuseColour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	::g_vecLights[0].position = glm::vec3( 2.0f, 2.0f, 0.0f );
+	::g_vecLights[0].diffuseColour = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	::g_vecLights[0].attenConst = 0.0f;
 	::g_vecLights[0].attenLinear = 0.324f;		// Why this number? It looked nice!
 	::g_vecLights[0].attenQuad = 0.0115f;		// Same with this number!
+
+	::g_vecLights[1].position = glm::vec3( 2.0f, 2.0f, 0.0f );
+	::g_vecLights[1].diffuseColour = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	::g_vecLights[1].attenConst = 0.0f;
+	::g_vecLights[1].attenLinear = 0.324f;		// Why this number? It looked nice!
+	::g_vecLights[1].attenQuad = 0.0115f;		// Same with this number!
+
+	::g_vecLights[2].position = glm::vec3( 2.0f, 2.0f, 0.0f );
+	::g_vecLights[2].diffuseColour = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	::g_vecLights[2].attenConst = 0.0f;
+	::g_vecLights[2].attenLinear = 0.324f;		// Why this number? It looked nice!
+	::g_vecLights[2].attenQuad = 0.0115f;		// Same with this number!
 
 	cLightHelper theLightHelper;
 
@@ -215,8 +281,74 @@ int main(void)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
+
+	// The main "frame" loop, like each time through this
+	//	renders the entire scene. (60Hz, 140 Hz)
+
+	double lastTime = glfwGetTime();
+
+	// Used for physics integration update
+	double globalLastTimeStamp = glfwGetTime();
+
 	while (!glfwWindowShouldClose(::g_window))
 	{
+		
+		//    ___                    ___ _           _         _   _          _      _            
+		//   | __|_ _ _ _  __ _  _  | _ \ |_ _  _ __(_)__ ___ | | | |_ __  __| |__ _| |_ ___ _ _  
+		//   | _/ _` | ' \/ _| || | |  _/ ' \ || (_-< / _(_-< | |_| | '_ \/ _` / _` |  _/ -_) '_| 
+		//   |_|\__,_|_||_\__|\_, | |_| |_||_\_, /__/_\__/__/  \___/| .__/\__,_\__,_|\__\___|_|   
+		//                    |__/           |__/                   |_|                           
+		if ( ::g_bDoEulerPhysicsUpdate )
+		{
+			double currentTime = glfwGetTime();
+			// Aka "frame time"
+			double deltaTime = currentTime - globalLastTimeStamp;
+			DoPhysicsIntegrationUpdate(deltaTime);
+			globalLastTimeStamp = currentTime;
+
+
+			// Move the bunny every 0.5 second
+			cMeshObject* pBunny = ::g_pFindObjectByFriendlyName("Bugs");
+
+			// Apply gravity to bunny
+			pBunny->acceleration.y = -1.0f; 
+			std::cout 
+				<< "a = " << pBunny->acceleration.y << ", " 
+				<< "v = " << pBunny->velocity.y << std::endl;
+
+			if ( pBunny->pos.y <= -2.0f )
+			{
+				pBunny->velocity.y = fabs(pBunny->velocity.y);
+				pBunny->pos.y = -2.0f;
+			}
+		}//if ( ::g_bDoEulerPhysicsUpdate )
+		
+
+
+		//    ___          _                                      _   
+		//   | _ ) __ _ __(_)__   _ __  _____ _____ _ __  ___ _ _| |_ 
+		//   | _ \/ _` (_-< / _| | '  \/ _ \ V / -_) '  \/ -_) ' \  _|
+		//   |___/\__,_/__/_\__| |_|_|_\___/\_/\___|_|_|_\___|_||_\__|
+		//                                                            
+		//if ( pBunny )
+		//{
+		//	//pBunny->pos.y += 0.01f;		// contin. motion
+
+		//	double currentTime = glfwGetTime();
+		//	const double TIME_WE_SHOULD_WAIT = 0.5;		// 500 ms
+
+		//	// How much time has passed? 
+		//	if ( (currentTime - lastTime) > TIME_WE_SHOULD_WAIT )
+		//	{
+		//		// Do the thing
+		//		pBunny->pos.y += 0.01f;
+		//		lastTime = glfwGetTime();		// "reset" the "last" time
+
+		//	}//if ( (currentTime..
+
+		//}//if ( pBunny )
+
+
 		float ratio;
 		int width, height;
 
@@ -247,54 +379,82 @@ int main(void)
 
 
 
+		//matView = glm::lookAt( cameraEye,		// position (3d space)
+		//					   cameraTarget,	// looking at
+		//					   upVector );		// Up vector
 
-		matView = glm::lookAt(cameraEye,		// position (3d space)
-			cameraTarget,	// looking at
-			upVector);		// Up vector
+		// Look at Luke's ship
+		cMeshObject* pLuke = ::g_pFindObjectByFriendlyName("Luke");
+		cMeshObject* pBugs = ::g_pFindObjectByFriendlyName("Bugs");
+
+		matView = glm::lookAt( cameraEye,		// position (3d space)
+							   pLuke->pos,		// looking at
+							   upVector );		// Up vector
 
 
+		// **************************************
+		if ( ::g_bTurnOnDebugLightSpheres )
+		{
+			::g_pTheLightAttenMesh[0]->bIsVisible  = 
+			::g_pTheLightAttenMesh[1]->bIsVisible = 
+			::g_pTheLightAttenMesh[2]->bIsVisible = true;
 
-							//// move that light mesh to where the light is at, yo
-		::g_pTheLightMesh->pos = ::g_vecLights[0].position;
+			::g_pTheLightMesh->bIsVisible = true;
 
-		// Take the other 4 meshes and change the location to where the light is
-		::g_pTheLightAttenMesh[0]->pos 
-			= ::g_pTheLightAttenMesh[1]->pos
-			= ::g_pTheLightAttenMesh[2]->pos
-			= ::g_pTheLightAttenMesh[3]->pos = ::g_pTheLightMesh->pos;
 
-		// Draw sphere 0 at 1% brightness
-		float distance = theLightHelper.calcApproxDistFromAtten
-			( 0.01f,   
-			  cLightHelper::DEFAULDIFFUSEACCURACYTHRESHOLD, 
-			  cLightHelper::DEFAULTINFINITEDISTANCE, 
-			  ::g_vecLights[0].attenConst,
-			  ::g_vecLights[0].attenLinear, 
-			  ::g_vecLights[0].attenQuad );
+			//// move that light mesh to where the light is at, yo
+			::g_pTheLightMesh->pos = ::g_vecLights[::g_SelectedLightID].position;
+			::g_pTheLightMesh->scale = 0.01f;
 
-		::g_pTheLightAttenMesh[0]->scale = distance;
 
-		// Draw sphere 0 at 50% brightness
-		distance = theLightHelper.calcApproxDistFromAtten
-			( 0.50f,   
-			  cLightHelper::DEFAULDIFFUSEACCURACYTHRESHOLD, 
-			  cLightHelper::DEFAULTINFINITEDISTANCE, 
-			  ::g_vecLights[0].attenConst,
-			  ::g_vecLights[0].attenLinear, 
-			  ::g_vecLights[0].attenQuad );
+			// Take the other 4 meshes and change the location to where the light is
+			::g_pTheLightAttenMesh[::g_SelectedLightID]->pos 
+				= ::g_pTheLightAttenMesh[1]->pos
+				= ::g_pTheLightAttenMesh[2]->pos
+				= ::g_pTheLightAttenMesh[3]->pos = ::g_pTheLightMesh->pos;
 
-		::g_pTheLightAttenMesh[1]->scale = distance;
+			// Draw sphere 0 at 1% brightness
+			float distance = theLightHelper.calcApproxDistFromAtten
+				( 0.01f,   
+				  cLightHelper::DEFAULDIFFUSEACCURACYTHRESHOLD, 
+				  cLightHelper::DEFAULTINFINITEDISTANCE, 
+				  ::g_vecLights[::g_SelectedLightID].attenConst,
+				  ::g_vecLights[::g_SelectedLightID].attenLinear, 
+				  ::g_vecLights[::g_SelectedLightID].attenQuad );
 
-		// Draw sphere 0 at 90% brightness
-		distance = theLightHelper.calcApproxDistFromAtten
-			( 0.90f,   
-			  cLightHelper::DEFAULDIFFUSEACCURACYTHRESHOLD, 
-			  cLightHelper::DEFAULTINFINITEDISTANCE, 
-			  ::g_vecLights[0].attenConst,
-			  ::g_vecLights[0].attenLinear, 
-			  ::g_vecLights[0].attenQuad );
+			::g_pTheLightAttenMesh[0]->scale = distance;
 
-		::g_pTheLightAttenMesh[2]->scale = distance;
+			// Draw sphere 0 at 50% brightness
+			distance = theLightHelper.calcApproxDistFromAtten
+				( 0.50f,   
+				  cLightHelper::DEFAULDIFFUSEACCURACYTHRESHOLD, 
+				  cLightHelper::DEFAULTINFINITEDISTANCE, 
+				  ::g_vecLights[::g_SelectedLightID].attenConst,
+				  ::g_vecLights[::g_SelectedLightID].attenLinear, 
+				  ::g_vecLights[::g_SelectedLightID].attenQuad );
+
+			::g_pTheLightAttenMesh[1]->scale = distance;
+
+			// Draw sphere 0 at 90% brightness
+			distance = theLightHelper.calcApproxDistFromAtten
+				( 0.90f,   
+				  cLightHelper::DEFAULDIFFUSEACCURACYTHRESHOLD, 
+				  cLightHelper::DEFAULTINFINITEDISTANCE, 
+				  ::g_vecLights[::g_SelectedLightID].attenConst,
+				  ::g_vecLights[::g_SelectedLightID].attenLinear, 
+				  ::g_vecLights[::g_SelectedLightID].attenQuad );
+
+			::g_pTheLightAttenMesh[2]->scale = distance;
+
+		}//if ( ::g_bTurnOnDebugLightSpheres )
+		else
+		{
+			// Don't Draw the light spheres
+			::g_pTheLightAttenMesh[0]->bIsVisible  = 
+			::g_pTheLightAttenMesh[1]->bIsVisible = 
+			::g_pTheLightAttenMesh[2]->bIsVisible = false;
+			::g_pTheLightMesh->bIsVisible = false;
+		}//if ( ::g_bTurnOnDebugLightSpheres )
 
 
 		CopyLightInfoToShader(NUMLIGHTS);
@@ -308,6 +468,12 @@ int main(void)
 		{
 			cMeshObject* pCurMesh = ::g_vec_pMeshObjects[meshIndex];
 
+			// Is this visible
+			if ( ! pCurMesh->bIsVisible )
+			{
+				// Skip it.
+				continue;
+			}
 
 			//mat4x4_identity(m);
 			matModel = glm::mat4(1.0f);		// because "math"
@@ -455,7 +621,7 @@ int main(void)
 
 void ProcessInput(glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &window)
 {
-	float cameraSpeed = 0.2f;
+	float cameraSpeed = 0.2f; 
 
 	int state = glfwGetKey(window, GLFW_KEY_D);
 	if (state == GLFW_PRESS) { cameraEye.x += cameraSpeed; }
@@ -463,7 +629,7 @@ void ProcessInput(glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &wi
 	state = glfwGetKey(window, GLFW_KEY_A);
 	if (state == GLFW_PRESS) { cameraEye.x -= cameraSpeed; }
 
-		state = glfwGetKey(window, GLFW_KEY_W);
+	state = glfwGetKey(window, GLFW_KEY_W);
 	if (state == GLFW_PRESS) { cameraEye.z += cameraSpeed; }
 
 	state = glfwGetKey(window, GLFW_KEY_S);
@@ -484,36 +650,36 @@ void ProcessInput(glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &wi
 
 	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
 	{	// Increase linear atten by 1%
-		if (::g_vecLights[0].attenLinear <= 0.0f)
-		{
-			::g_vecLights[0].attenLinear = 0.001f;		// Make it a tiny value
+		if ( ::g_vecLights[::g_SelectedLightID].attenLinear <= 0.0f )	 
+		{ 
+			::g_vecLights[::g_SelectedLightID].attenLinear = 0.001f;		// Make it a tiny value
 		}
 		else
 		{
-			::g_vecLights[0].attenLinear *= 1.01f;		// + 1%
-			if (::g_vecLights[0].attenLinear >= sLight::MAX_ATTENUATION)
+			::g_vecLights[::g_SelectedLightID].attenLinear *= 1.01f;		// + 1%
+			if ( ::g_vecLights[::g_SelectedLightID].attenLinear >= sLight::MAX_ATTENUATION )
 			{
-				::g_vecLights[0].attenLinear = sLight::MAX_ATTENUATION;
+				::g_vecLights[::g_SelectedLightID].attenLinear = sLight::MAX_ATTENUATION;		
 			}
 		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
 	{	// Decrease quadratic atten by 1%
-		::g_vecLights[0].attenQuad *= 0.99f;			// +1%
+		::g_vecLights[::g_SelectedLightID].attenQuad *= 0.99f;			// +1%
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
 	{	// Increase quadratic atten by 1%
-		if (::g_vecLights[0].attenQuad <= 0.0f)
-		{
-			::g_vecLights[0].attenQuad = 0.0001f;		// Make it a tiny value
+		if ( ::g_vecLights[::g_SelectedLightID].attenQuad <= 0.0f )	 
+		{ 
+			::g_vecLights[::g_SelectedLightID].attenQuad = 0.0001f;		// Make it a tiny value
 		}
 		else
 		{
-			::g_vecLights[0].attenQuad *= 1.01f;		// + 1%
-			if (::g_vecLights[0].attenQuad >= sLight::MAX_ATTENUATION)
+			::g_vecLights[::g_SelectedLightID].attenQuad *= 1.01f;		// + 1%
+			if ( ::g_vecLights[::g_SelectedLightID].attenQuad >= sLight::MAX_ATTENUATION )
 			{
-				::g_vecLights[0].attenQuad = sLight::MAX_ATTENUATION;
+				::g_vecLights[::g_SelectedLightID].attenQuad = sLight::MAX_ATTENUATION;		
 			}
 		}
 	}
@@ -521,39 +687,46 @@ void ProcessInput(glm::vec3 &cameraEye, glm::vec3 &cameraTarget, GLFWwindow* &wi
 	// Also move the light around
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 	{
-		::g_vecLights[0].position.z += cameraSpeed;
+		::g_vecLights[::g_SelectedLightID].position.z += cameraSpeed;		
 	}
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 	{
-		::g_vecLights[0].position.z -= cameraSpeed;
-	}
-	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		::g_vecLights[::g_SelectedLightID].position.z -= cameraSpeed;		
+	}		
+	if ( glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS )
 	{
-		::g_vecLights[0].position.x -= cameraSpeed;
-	}
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		::g_vecLights[::g_SelectedLightID].position.x -= cameraSpeed;		
+	}	
+	if ( glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS )
 	{
-		::g_vecLights[0].position.x += cameraSpeed;
-	}
-	if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+		::g_vecLights[::g_SelectedLightID].position.x += cameraSpeed;		
+	}		
+	if ( glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS )
 	{
-		::g_vecLights[0].position.y += cameraSpeed;
-	}
-	if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+		::g_vecLights[::g_SelectedLightID].position.y += cameraSpeed;		
+	}		
+	if ( glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS )
 	{
-		::g_vecLights[0].position.y -= cameraSpeed;
-	}
+		::g_vecLights[::g_SelectedLightID].position.y -= cameraSpeed;		
+	}		
+
+	// 
+	//if ( glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS )
+	//{
+	//	std::cout << "Hey!@" << std::endl;
+	//	::g_bTurnOnDebugLightSpheres = false;
+	//}
 
 
 	std::stringstream ssTitle;
-	ssTitle << "Light[0]: xyz("
-		<< ::g_vecLights[0].position.x << ", "
-		<< ::g_vecLights[0].position.y << ", "
-		<< ::g_vecLights[0].position.z << ") "
-		<< "Lin: "
-		<< ::g_vecLights[0].attenLinear << " "
-		<< "Quad: "
-		<< ::g_vecLights[0].attenQuad;
+	ssTitle << "Light[" << ::g_SelectedLightID << "]: xyz("
+		<< ::g_vecLights[::g_SelectedLightID].position.x << ", "
+		<< ::g_vecLights[::g_SelectedLightID].position.y << ", "
+		<< ::g_vecLights[::g_SelectedLightID].position.z << ") "
+		<< "Lin: " 
+		<< ::g_vecLights[::g_SelectedLightID].attenLinear << " "
+		<< "Quad: " 
+		<< ::g_vecLights[::g_SelectedLightID].attenQuad;
 
 	glfwSetWindowTitle(::g_window, ssTitle.str().c_str());
 
@@ -623,9 +796,16 @@ bool LoadModelTypes(GLint shadProgID, std::string &errors)
 	}
 
 	sModelDrawInfo sphere;
-	if (!::g_pTheVAOManager->LoadModelIntoVAO("isosphere_smooth_xyz_n_rgba_uv.ply", terrain, shadProgID))
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "isosphere_smooth_xyz_n_rgba_uv.ply", sphere, shadProgID ) )
 	{
 		ssError << "ERROR: isosphere_smooth_xyz_n_rgba_uv.ply wasn't loaded" << std::endl;
+		bAllGood = false;
+	}
+
+	sModelDrawInfo UseTheForceLuke;
+	if ( ! ::g_pTheVAOManager->LoadModelIntoVAO( "X-Wing_Attack_(33569 faces)_xyz_n_rgba_uv.ply", UseTheForceLuke, shadProgID ) )
+	{
+		ssError << "ERROR: X-Wing_Attack_(33569 faces)_xyz_n_rgba_uv.ply wasn't loaded" << std::endl;
 		bAllGood = false;
 	}
 
@@ -699,3 +879,40 @@ void CopyLightInfoToShader(unsigned int numberOfLightsToCopy)
 }
 
 
+void DoPhysicsIntegrationUpdate(double deltaTime)
+{
+	// Check if too big
+	const double BIGGEST_TIME_STEP_ALLOWED = 0.1f;	// 100 ms is pretty big...
+	
+	if ( deltaTime > BIGGEST_TIME_STEP_ALLOWED )
+	{
+		deltaTime = BIGGEST_TIME_STEP_ALLOWED;
+	}
+
+
+
+	unsigned int numberOfObjects = (unsigned int)::g_vec_pMeshObjects.size();
+	for ( unsigned int meshIndex = 0;
+		meshIndex != numberOfObjects; meshIndex++ )
+	{
+		cMeshObject* pCurMesh = ::g_vec_pMeshObjects[meshIndex];
+
+		if ( pCurMesh->friendlyName != "Bugs" )
+		{
+			continue;
+		}
+
+		// new position = old postion + (velocity * time)
+		// new velocity = old velocity + (acceleration * time)
+
+		pCurMesh->velocity += (float)deltaTime * pCurMesh->acceleration;
+
+		pCurMesh->pos += (float)deltaTime * pCurMesh->velocity;
+
+
+		pCurMesh = NULL;
+	}
+
+
+	return;
+}

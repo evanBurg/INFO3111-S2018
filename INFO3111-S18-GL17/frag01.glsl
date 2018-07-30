@@ -22,6 +22,7 @@ struct sLight
 	vec4 AttenAndType;	// 0 = point, 1 = spot, 2 = directional 
 };
 uniform sLight theLights[NUMLIGHTS];
+//uniform int numberOfLightsImReallyUsing;
 
 // LIGHT 1
 uniform vec3 lightPosition1;

@@ -12,6 +12,13 @@ cMeshObject::cMeshObject()
 
 	this->bDontLightObject = false;
 
+	this->bIsVisible = true;
+
+
+	this->velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+	this->acceleration = glm::vec3(0.0f, 0.0f, 0.0f);
+
+
 	return;
 }
 
