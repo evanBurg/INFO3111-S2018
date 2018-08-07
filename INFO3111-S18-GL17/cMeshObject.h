@@ -14,11 +14,28 @@ public:
     ~cMeshObject();
     std::string meshName;
     glm::vec3 pos;			// 0,0,0 (origin)
+	// RGB + global 'alpha' colour, if chosen
     glm::vec4 colour;		// 0,0,0,1 (black)
 	glm::vec3 orientation;	// 
     float scale;			// 1.0f
     bool isWireframe;		// false
 	bool bDontLightObject;
+
+	enum eColourSource
+	{
+		USE_VERTEX_COLOURS,	// Uses the vertex colour from model
+		USE_OBJECT_COLOUR	// Uses 'colour' from above
+	};
+	// Takes colour from vertex colours, in model, or a single colour, passed as uniform
+	eColourSource colourSource;// = cMeshObject::USE_OBJECT_COLOUR;
+
+	// If this is false, the vertex (i.e. model) alpha values
+	//	will be used. You would do this if you wanted to control 
+	//	the transparency at the vertex level. 
+	// Note: This will be replaced by texture alpha blending, later
+	// If true, then the 4th value of the "colour" will be used for 
+	//	'overall' transparency value (like for the entire object)
+	bool bUseColourAlphaValue;	// = true
 
 	const unsigned int uniqueID = 0;
 

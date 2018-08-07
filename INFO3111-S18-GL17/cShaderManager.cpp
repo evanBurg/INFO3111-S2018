@@ -55,6 +55,27 @@ unsigned int cShaderManager::getIDFromFriendlyName( std::string friendlyName )
 	return itShad->second;
 }
 
+cShaderManager::cShaderProgram* 
+	cShaderManager::pGetShaderProgramFromFriendlyName( std::string friendlyName )
+{
+	unsigned int shaderID = this->getIDFromFriendlyName(friendlyName);
+
+	// Now get the actual shader
+	
+		std::map< unsigned int /*ID*/, cShaderProgram >::iterator
+			itShad = this->m_ID_to_Shader.find(shaderID);
+
+	if ( itShad == this->m_ID_to_Shader.end() )
+	{	// Didn't find it
+		return NULL;		// or 0 or nullptr
+	}
+
+	cShaderProgram* pShaderIFound = &(itShad->second);
+
+	return pShaderIFound;
+}
+
+
 const unsigned int MAXLINELENGTH = 65536;		// 16x1024
 
 void cShaderManager::setBasePath( std::string basepath )

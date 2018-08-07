@@ -12,12 +12,13 @@ uniform mat4 matView;
 uniform mat4 matProjection;
 
 uniform vec4 meshColourRGBA; 		// Now a vec4!!
-// If true, the A value in vColourRGBA
-// will be used as the 'a' value for the colour
-uniform bool bUse_vColourRGBA_AlphaValue;		
 
 // glUniform1f()  pass in 0 or 1 
 uniform bool bUseVertexColour;		// 0 or 1 Really a float
+
+// If true, the A value in vColourRGBA
+// will be used as the 'a' value for the colour
+uniform bool bUse_vColourRGBA_AlphaValue;		
 
 // Being passed to next shader stage... 
 out vec4 vertColourRGBA;

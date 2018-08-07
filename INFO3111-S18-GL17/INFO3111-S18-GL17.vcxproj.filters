@@ -1,28 +1,94 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="cMeshObject.cpp" />
-    <ClCompile Include="cShader.cpp" />
-    <ClCompile Include="cShaderManager.cpp" />
-    <ClCompile Include="glad.c" />
     <ClCompile Include="TheMain.cpp" />
-    <ClCompile Include="cVAOManager.cpp" />
-    <ClCompile Include="cLightHelper.cpp" />
-    <ClCompile Include="ObjectLoadingStuff.cpp" />
-    <ClCompile Include="commonEngineStuff.cpp" />
+    <ClCompile Include="CGLColourHelper.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="cLightHelper.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="cMeshObject.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="cShaderManager.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="cShader.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="cVAOManager.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="globalStuff.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="SaveAndLoadObjects.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="sLight.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawObjectFunction.cpp">
+      <Filter>Functions</Filter>
+    </ClCompile>
+    <ClCompile Include="key_callback_GLFW.cpp">
+      <Filter>Functions</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectLoadingStuff.cpp">
+      <Filter>Functions</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessInputAsync.cpp">
+      <Filter>Functions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cMeshObject.h" />
-    <ClInclude Include="cShaderManager.h" />
-    <ClInclude Include="globalOpenGLStuff.h" />
-    <ClInclude Include="linmath.h" />
-    <ClInclude Include="cVAOManager.h" />
-    <ClInclude Include="cLightHelper.h" />
-    <ClInclude Include="commonEngineStuff.h" />
+    <ClInclude Include="CGLColourHelper.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="cLightHelper.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="cMeshObject.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="cShaderManager.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="cVAOManager.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="globalStuff.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="sLight.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="SaveAndLoadObjects.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="linmath.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Shaders">
       <UniqueIdentifier>{a162d39b-6848-46c7-8daf-06dc7bf3fed3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{e8f48f84-06a8-48bb-b575-20eaae26fb90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Implementation">
+      <UniqueIdentifier>{03a8783b-f18f-4fd3-83ab-7833b3380bfc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL">
+      <UniqueIdentifier>{368d3803-ad09-49d6-bc12-0cd99be3065e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Functions">
+      <UniqueIdentifier>{350e37d3-333c-4f32-9559-7a76bfe05098}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

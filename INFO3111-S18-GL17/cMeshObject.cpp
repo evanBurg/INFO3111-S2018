@@ -14,6 +14,10 @@ cMeshObject::cMeshObject()
 
 	this->bIsVisible = true;
 
+	this->colourSource = cMeshObject::USE_VERTEX_COLOURS;
+
+	this->bUseColourAlphaValue = true;
+
 
 	this->velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 	this->acceleration = glm::vec3(0.0f, 0.0f, 0.0f);

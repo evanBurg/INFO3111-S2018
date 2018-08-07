@@ -156,24 +156,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CGLColourHelper.cpp" />
     <ClCompile Include="cLightHelper.cpp" />
     <ClCompile Include="cMeshObject.cpp" />
-    <ClCompile Include="commonEngineStuff.cpp" />
+    <ClCompile Include="DrawObjectFunction.cpp" />
+    <ClCompile Include="globalStuff.cpp" />
     <ClCompile Include="cShader.cpp" />
     <ClCompile Include="cShaderManager.cpp" />
     <ClCompile Include="cVAOManager.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="key_callback_GLFW.cpp" />
     <ClCompile Include="ObjectLoadingStuff.cpp" />
+    <ClCompile Include="ProcessInputAsync.cpp" />
+    <ClCompile Include="SaveAndLoadObjects.cpp" />
+    <ClCompile Include="sLight.cpp" />
     <ClCompile Include="TheMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CGLColourHelper.h" />
     <ClInclude Include="cLightHelper.h" />
     <ClInclude Include="cMeshObject.h" />
-    <ClInclude Include="commonEngineStuff.h" />
+    <ClInclude Include="globalStuff.h" />
     <ClInclude Include="cShaderManager.h" />
     <ClInclude Include="cVAOManager.h" />
-    <ClInclude Include="globalOpenGLStuff.h" />
     <ClInclude Include="linmath.h" />
+    <ClInclude Include="SaveAndLoadObjects.h" />
+    <ClInclude Include="sLight.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="frag01.glsl" />

@@ -9,13 +9,14 @@ in vec4 vertTexUV;
 
 uniform bool bDontLightObject;
 
-const int NUMLIGHTS = 3;
+const int NUMLIGHTS = 10;
 
 struct sLight
 {
 	vec3 Position;
 	vec4 Direction;
-	vec4 Diffuse;
+	vec4 Diffuse;		// If w value = 0.0, then light isn't 'on'
+	                    // (the 4th value doesn't have a use for RGB colour)
 	vec4 Ambient;
 	vec4 Specular; 		// rgb = colour, w = intensity
 	// x = constant, y = linear, z = quadratic, w = “type”
@@ -105,6 +106,14 @@ void main()
 	
 	for ( int index = 0; index != NUMLIGHTS; index++ )
 	{
+		// Is this light 'in use'?
+		// (is Diffuse.w != 0.0?)
+		if ( theLights[index].Diffuse.w == 0.0f )
+		{
+			// Skip this light
+			continue;
+		}
+	
 	
 		// The Diffuse component (aka how much light is reflecting off the surface?)
 		
